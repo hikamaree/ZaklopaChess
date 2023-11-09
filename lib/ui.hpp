@@ -7,7 +7,7 @@
 
 using namespace sf;
 
-struct Ui {
+class Ui {
     private:
     Color background_color;
     Color text_color;

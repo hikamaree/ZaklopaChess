@@ -505,7 +505,7 @@ bool Ui::start_game() {
 }
 
 void Ui::end_game(int mate) {
-    playing = false;
+    if(mate) playing = false;
     switch (mate) {
         case 1:
             winner.setString("STALEMATE DRAW");
@@ -518,9 +518,6 @@ void Ui::end_game(int mate) {
         case 3:
             winner.setString("CHECKMATE BLACK WON");
             winner.setPosition(Vector2f(215.f, 422.f));
-            break;
-        default:
-            playing = true;
             break;
     }
 }

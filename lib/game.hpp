@@ -7,7 +7,7 @@
 
 using namespace std;
 
-struct Game {
+class Game {
     private:
     bool ch;
     bool next_check;

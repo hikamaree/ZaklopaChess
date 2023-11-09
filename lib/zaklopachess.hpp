@@ -4,14 +4,14 @@
 #include <SFML/Graphics.hpp>
 #include "game.hpp"
 #include "ui.hpp"
-#include "server.hpp"
 
-struct ZaklopaChess {
+class ZaklopaChess {
 private:
     Game game;
     Ui ui;
 
     void input(int x, int y);
+    void paly_online();
 public:
     void play();
 };
