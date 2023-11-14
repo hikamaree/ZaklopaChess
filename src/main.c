@@ -34,5 +34,8 @@ int main() {
         draw(&ui, chess.position, chess.possible, chess.x, chess.y, chess.turn, chess.mate);
     }
 
+    close_ui(&ui);
+    CloseAudioDevice();
+    CloseWindow();
     return 0;
 }

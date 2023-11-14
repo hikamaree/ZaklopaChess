@@ -15,11 +15,8 @@ void set_ui(Ui *ui) {
     ui -> b_knight = LoadTexture("assets/textures/black_knight.png");
     ui -> b_pawn = LoadTexture("assets/textures/black_pawn.png");
 
-#if defined(PLATFORM_WEB)
-#else
-    ui -> move_sound = LoadSound("assets/sounds/move.mp3");
-    ui -> capture_sound = LoadSound("assets/sounds/capture.mp3");
-#endif
+    ui -> move_sound = LoadSound("assets/sounds/move.wav");
+    ui -> capture_sound = LoadSound("assets/sounds/capture.wav");
 
     ui -> button1.x = 925;
     ui -> button1.y = 150;
@@ -248,4 +245,22 @@ void play_sound(Ui *ui, bool capture) {
         else
             PlaySound(ui -> move_sound);
     }
+}
+
+void close_ui(Ui *ui) {
+    UnloadTexture(ui -> w_king);
+    UnloadTexture(ui -> w_queen);
+    UnloadTexture(ui -> w_rook);
+    UnloadTexture(ui -> w_bishop);
+    UnloadTexture(ui -> w_knight);
+    UnloadTexture(ui -> w_pawn);
+    UnloadTexture(ui -> b_king);
+    UnloadTexture(ui -> b_queen);
+    UnloadTexture(ui -> b_rook);
+    UnloadTexture(ui -> b_bishop);
+    UnloadTexture(ui -> b_knight);
+    UnloadTexture(ui -> b_pawn);
+
+    UnloadSound(ui -> move_sound);
+    UnloadSound(ui -> capture_sound);
 }

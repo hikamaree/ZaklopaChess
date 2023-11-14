@@ -52,5 +52,6 @@ void draw(Ui *ui, char position[8][8], int possible[8][8], int x, int y, bool tu
 void input(Ui *ui, int *x, int *y, bool turn);
 void play_sound(Ui *ui, bool capture);
 void end_game(Ui *ui, int mate);
+void close_ui(Ui *ui);
 
 #endif
