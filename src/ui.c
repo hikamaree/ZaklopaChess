@@ -204,7 +204,11 @@ void draw(Ui *ui, char position[8][8], int possible[8][8], int x, int y, bool tu
 
 void input(Ui *ui, int *x, int *y, bool turn) {
     bool side = (ui -> rotation && turn) || (!ui -> rotation && ui -> perspective);
-    Vector2 mouse = GetMousePosition();
+    Vector2 mouse;
+    if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+        mouse = GetMousePosition();
+    else if(GetTouchPointCount())
+        mouse = GetTouchPosition(0);
     if(ui -> options) {
         if(CheckCollisionPointRec(mouse, ui -> button1))
             ui -> rotation = !ui -> rotation;

@@ -28,7 +28,7 @@ int main() {
 
     while (!WindowShouldClose()) {
 
-        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) || GetTouchPointCount()) {
             mouse_input(&ui, &chess);
         }
         draw(&ui, chess.position, chess.possible, chess.x, chess.y, chess.turn, chess.mate);
