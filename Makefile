@@ -6,7 +6,7 @@ BINARY=build/zaklopachess
 CXX=gcc
 GDB=gdb
 MKDIR=mkdir -p
-RM=rm -r
+RM=rm -rf
 
 LDFLAGS=-lraylib
 CXXFLAGS=-Wall -I $(LIB_DIR) -O3

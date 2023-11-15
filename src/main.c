@@ -1,8 +1,8 @@
 #include "chess.h"
 #include "ui.h"
-void mouse_input(Ui *ui, Chess *chess) {
+void mouse_input(Ui *ui, Chess *chess, Vector2 coordinate) {
     int x, y;
-    input(ui, &x, &y, chess -> turn);
+    input(ui, &x, &y, chess -> turn, coordinate);
     if(ui -> newgame){
         new_game(chess);
         ui -> newgame = false;
@@ -28,9 +28,11 @@ int main() {
 
     while (!WindowShouldClose()) {
 
-        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) || GetTouchPointCount()) {
-            mouse_input(&ui, &chess);
-        }
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+            mouse_input(&ui, &chess, GetMousePosition());
+        else if(IsGestureDetected(GESTURE_TAP))
+            mouse_input(&ui, &chess, GetTouchPosition(0));
+
         draw(&ui, chess.position, chess.possible, chess.x, chess.y, chess.turn, chess.mate);
     }
 

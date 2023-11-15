@@ -55,7 +55,7 @@ typedef struct Ui {
 
 void set_ui(Ui *ui);
 void draw(Ui *ui, char position[8][8], int possible[8][8], int x, int y, bool turn, int mate);
-void input(Ui *ui, int *x, int *y, bool turn);
+void input(Ui *ui, int *x, int *y, bool turn, Vector2 coordinate);
 void play_sound(Ui *ui, bool capture);
 void end_game(Ui *ui, int mate);
 void close_ui(Ui *ui);
