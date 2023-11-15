@@ -14,6 +14,12 @@
 #define BUTTON (Color){ 41, 46, 66, 255 }
 #define END_SCREEN (Color){ 0, 0, 0, 64 }
 
+#if defined(PLATFORM_WEB)
+#define WEB 1
+#else
+#define WEB 0
+#endif
+
 typedef struct Ui {
     bool options;
     bool rotation;

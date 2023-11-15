@@ -168,9 +168,10 @@ void draw_menu(Ui *ui) {
 
         DrawRectangleRec(ui -> button2, BUTTON);
         DrawText("OPTIONS", 980, 265, 20, TEXT_COLOR);
-
-        DrawRectangleRec(ui -> button3, BUTTON);
-        DrawText("QUIT", 1000, 365, 20, TEXT_COLOR);
+        if(!WEB) {
+            DrawRectangleRec(ui -> button3, BUTTON);
+            DrawText("QUIT", 1000, 365, 20, TEXT_COLOR);
+        }
     }
 }
 
@@ -221,8 +222,10 @@ void input(Ui *ui, int *x, int *y, bool turn) {
             ui -> newgame = true;
         if(CheckCollisionPointRec(mouse, ui -> button2))
             ui -> options = true;
-        if(CheckCollisionPointRec(mouse, ui -> button3))
+        if(!WEB && CheckCollisionPointRec(mouse, ui -> button3)) {
+            close_ui(ui);
             exit(0);
+        }
     }
     *x = (mouse.y - 50) / 100;
     *y = (mouse.x - 50) / 100;
