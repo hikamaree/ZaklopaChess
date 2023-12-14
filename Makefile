@@ -8,7 +8,7 @@ GDB=gdb
 MKDIR=mkdir -p
 RM=rm -rf
 
-LDFLAGS=-lraylib
+LDFLAGS=-lraylib -lm
 CXXFLAGS=-Wall -I $(LIB_DIR) -O3
 
 SOURCES=$(wildcard $(SRC_DIR)/*.c)

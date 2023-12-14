@@ -5,7 +5,7 @@
 #include <string.h>
 #include <stdbool.h>
 
-typedef struct Chess {
+typedef struct {
     bool ch;
     bool next_check;
     bool oo_white;
@@ -25,7 +25,7 @@ typedef struct Chess {
 } Chess;
 
 void new_game(Chess *chess);
-void play(Chess *chess, int x, int y);
-void play_move(Chess *chess, char move[]);
+void play(Chess* chess, int x, int y);
+void play_move(Chess* chess, char* move);
 
 #endif

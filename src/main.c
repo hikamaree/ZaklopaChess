@@ -1,43 +1,12 @@
-#include "chess.h"
 #include "ui.h"
-void mouse_input(Ui *ui, Chess *chess, Vector2 coordinate) {
-    int x, y;
-    input(ui, &x, &y, chess -> turn, coordinate);
-    if(ui -> newgame){
-        new_game(chess);
-        ui -> newgame = false;
-    }
-    if(x != -1) {
-        play(chess, x, y);
-        if(chess -> moved) {
-            play_sound(ui, chess -> capture);
-        }
-    }
-}
 
 int main() {
-    InitWindow(1200, 900, "ZaklopaChess");
-    SetTargetFPS(60);
-    InitAudioDevice();
+	Chess chess;
+	new_game(&chess);
 
-    Chess chess;
-    new_game(&chess);
+	Engine engine;
+	set_engine(&engine, &chess);
 
-    Ui ui;
-    set_ui(&ui);
-
-    while (!WindowShouldClose()) {
-
-        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
-            mouse_input(&ui, &chess, GetMousePosition());
-        else if(IsGestureDetected(GESTURE_TAP))
-            mouse_input(&ui, &chess, GetTouchPosition(0));
-
-        draw(&ui, chess.position, chess.possible, chess.x, chess.y, chess.turn, chess.mate);
-    }
-
-    close_ui(&ui);
-    CloseAudioDevice();
-    CloseWindow();
-    return 0;
+	render(&chess, &engine);
+	return 0;
 }
