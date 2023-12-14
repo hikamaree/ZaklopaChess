@@ -41,4 +41,4 @@ clean:
 
 web:
 	mkdir -p $(WEB_DIR)
-	emcc --preload-file assets -s ALLOW_MEMORY_GROWTH=1 --no-heap-copy -s EXPORTED_RUNTIME_METHODS=ccall -o $(WEB_DIR)/$(OUT_HTML) $(SOURCES) -Wall -I$(LIB_DIR) $(LIBRAYLIB_A) -I$(RAYLIB_SRC) -L$(RAYLIB_SRC) -Os -s USE_GLFW=3 -s ASYNCIFY --shell-file $(IN_HTML) -DPLATFORM_WEB
+	emcc --preload-file assets -s ALLOW_MEMORY_GROWTH=1 --no-heap-copy -s EXPORTED_RUNTIME_METHODS=ccall -o $(WEB_DIR)/$(OUT_HTML) $(SOURCES) -Wall -I$(LIB_DIR) $(LIBRAYLIB_A) -I$(RAYLIB_SRC) -L$(RAYLIB_SRC) -Os -s USE_GLFW=3 -sGL_ENABLE_GET_PROC_ADDRESS -s ASYNCIFY --shell-file $(IN_HTML) -DPLATFORM_WEB 
