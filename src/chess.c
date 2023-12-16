@@ -1,65 +1,46 @@
 #include "chess.h"
 
-void reset(int possible[8][8]);
-bool white(char piece);
-bool black(char piece);
-bool piece(char piece);
-
-bool check_square(Chess *chess, int x1, int y1);
-void update_enpassant(Chess *chess, int x1, int y1);
-void promotion(Chess *chess, int x1, int y1);
-void castle(Chess *chess, int x1, int y1);
-void make_move(Chess *chess, int x1, int y1);
-bool check(Chess *chess, int x1, int y1);
-void end(Chess *chess);
-
-void pawn(Chess *chess);
-void knight(Chess *chess);
-void bishop(Chess *chess);
-void rook(Chess *chess);
-void king(Chess *chess);
-
 void new_game(Chess *chess) {
-	chess -> position[0][0] = 'r';
-	chess -> position[0][7] = 'r';
-	chess -> position[0][1] = 'n';
-	chess -> position[0][6] = 'n';
-	chess -> position[0][2] = 'b';
-	chess -> position[0][5] = 'b';
-	chess -> position[0][3] = 'q';
-	chess -> position[0][4] = 'k';
+	chess->position[0][0] = 'r';
+	chess->position[0][7] = 'r';
+	chess->position[0][1] = 'n';
+	chess->position[0][6] = 'n';
+	chess->position[0][2] = 'b';
+	chess->position[0][5] = 'b';
+	chess->position[0][3] = 'q';
+	chess->position[0][4] = 'k';
 
-	chess -> position[7][0] = 'R';
-	chess -> position[7][7] = 'R';
-	chess -> position[7][1] = 'N';
-	chess -> position[7][6] = 'N';
-	chess -> position[7][2] = 'B';
-	chess -> position[7][5] = 'B';
-	chess -> position[7][3] = 'Q';
-	chess -> position[7][4] = 'K';
+	chess->position[7][0] = 'R';
+	chess->position[7][7] = 'R';
+	chess->position[7][1] = 'N';
+	chess->position[7][6] = 'N';
+	chess->position[7][2] = 'B';
+	chess->position[7][5] = 'B';
+	chess->position[7][3] = 'Q';
+	chess->position[7][4] = 'K';
 
 	for(int i = 0; i < 8; i++) {
-		chess -> position[1][i] = 'p';
-		chess -> position[6][i] = 'P';
+		chess->position[1][i] = 'p';
+		chess->position[6][i] = 'P';
 	}
 
 	for(int i = 2; i < 6; i++)
 		for(int j = 0; j < 8; j++)
-			chess -> position[i][j] = ' ';
+			chess->position[i][j] = ' ';
 
-	reset(chess -> possible);
+	reset(chess->possible);
 
-	chess -> x = -1;
-	chess -> y = -1;
-	chess -> mate = 0;
-	chess -> enpassant = -1;
-	chess -> oo_white = true;
-	chess -> ooo_white = true;
-	chess -> oo_black = true;
-	chess -> ooo_black = true;
-	chess -> moved = false;
-	chess -> turn = true;
-	chess -> ch = true;
+	chess->x = -1;
+	chess->y = -1;
+	chess->mate = 0;
+	chess->enpassant = -1;
+	chess->oo_white = true;
+	chess->ooo_white = true;
+	chess->oo_black = true;
+	chess->ooo_black = true;
+	chess->moved = false;
+	chess->turn = true;
+	chess->ch = true;
 }
 
 void reset(int possible[8][8]) {
@@ -79,7 +60,6 @@ bool piece(char piece) {
 }
 
 void play(Chess *chess, int x1, int y1) {
-//	printf("%d %d\n", x1, y1);
 	chess -> capture = false;
 	chess -> moved = false;
 	if(chess -> x == -1 || chess -> y == -1) {
@@ -98,12 +78,19 @@ void play(Chess *chess, int x1, int y1) {
 			update_enpassant(chess, x1, y1);
 			castle(chess, x1, y1);
 			if(chess -> position[x1][y1] != ' ') chess -> capture = true;
+			make_move(chess, x1, y1);
 			chess -> position[x1][y1] = chess -> position[chess -> x][chess -> y];
 			chess -> position[chess -> x][chess -> y] = ' ';
 			promotion(chess, x1, y1);
 			chess -> moved = true;
 			chess -> turn = !chess -> turn;
 			end(chess);
+			if(chess->mate == 1 && check(chess, -1, -1)) {
+				chess->mate++;
+				if(chess->turn) {
+					chess->mate++;
+				}
+			}
 		}
 		chess -> x = -1;
 		chess -> y = -1;
@@ -116,7 +103,15 @@ void play_move(Chess* chess, char *move) {
 	play(chess, 56 - move[4], move[3] - 65);
 }
 
-bool check_square(Chess *chess, int x1, int y1) {
+void make_move(Chess* chess, int x1, int y1) {
+	chess->move[0] = chess->position[chess->x][chess->y];
+	chess->move[1] = chess->y + 65;
+	chess->move[2] = 56 - chess->x;
+	chess->move[3] = y1 + 65;
+	chess->move[4] = 56 - x1;
+}
+
+bool check_square(Chess* chess, int x1, int y1) {
 	if (x1 < 8 && x1 >= 0 && y1 < 8 && y1 >= 0 && (!chess -> ch || !check(chess, x1, y1)) &&
 			((!white(chess -> position[x1][y1]) && white(chess -> position[chess -> x][chess -> y])) ||
 			 (!black(chess -> position[x1][y1]) && black(chess -> position[chess -> x][chess -> y])))) {
@@ -336,54 +331,63 @@ void castle(Chess *chess, int x1, int y1) {
 }
 
 bool check(Chess *chess, int x1, int y1) {
-	chess -> ch = false;
-	chess -> next_check = false;
-	int tmp_x = chess -> x;
-	int tmp_y = chess -> y;
-	char tmp_piece = chess -> position[x1][y1];
+	chess->ch = false;
+	chess->next_check = false;
+	int tmp_x = chess->x;
+	int tmp_y = chess->y;
+	char tmp_piece = chess->position[x1][y1];
+	if(x1 != -1) {
+		chess->position[x1][y1] = chess->position[chess->x][chess->y];
+		chess->position[chess->x][chess->y] = ' ';
+	}
 	int tmp_possible[8][8];
-	chess -> position[x1][y1] = chess -> position[chess -> x][chess -> y];
-	chess -> position[chess -> x][chess -> y] = ' ';
-	memcpy(tmp_possible, chess -> possible, 64 * sizeof(int));
+	memcpy(tmp_possible, chess->possible, 64 * sizeof(int));
 
-	for(int i = 0; i < 8 && !chess -> next_check; i++)
-		for(int j = 0; j < 8 && !chess -> next_check; j++)
-			if((chess -> turn && black(chess -> position[i][j])) || (!chess -> turn && white(chess -> position[i][j]))) {
-				chess -> x = i;
-				chess -> y = j;
-				reset(chess -> possible);
+	for(int i = 0; i < 8 && !chess->next_check; i++) {
+		for(int j = 0; j < 8 && !chess->next_check; j++) {
+			if((chess->turn && black(chess->position[i][j])) || (!chess->turn && white(chess->position[i][j]))) {
+				chess->x = i;
+				chess->y = j;
+				reset(chess->possible);
 				pawn(chess);
 				knight(chess);
 				bishop(chess);
 				rook(chess);
 				king(chess);
 			}
-	chess -> x = tmp_x;
-	chess -> y = tmp_y;
-	chess -> position[chess -> x][chess -> y] = chess -> position[x1][y1];
-	chess -> position[x1][y1] = tmp_piece;
-	memcpy(chess -> possible, tmp_possible, 64 * sizeof(int));
-	chess -> ch = true;
-	return chess -> next_check;
+		}
+	}
+	chess->x = tmp_x;
+	chess->y = tmp_y;
+	if(x1 != -1) {
+		chess->position[chess->x][chess->y] = chess->position[x1][y1];
+		chess->position[x1][y1] = tmp_piece;
+	}
+	memcpy(chess->possible, tmp_possible, 64 * sizeof(int));
+	chess->ch = true;
+	return chess->next_check;
 }
 
 void end(Chess *chess) {
 	chess -> mate = 1;
-	for(int i = 0; i < 8; i++)
-		for(int j = 0; j < 8; j++)
-			if((chess -> turn && white(chess -> position[i][j])) || (!chess -> turn && black(chess -> position[i][j]))) {
-				chess -> x = i;
-				chess -> y = j;
-				reset(chess -> possible);
+	for(int i = 0; i < 8; i++) {
+		for(int j = 0; j < 8; j++) {
+			if((chess->turn && white(chess->position[i][j])) || (!chess->turn && black(chess->position[i][j]))) {
+				chess->x = i;
+				chess->y = j;
+				reset(chess->possible);
 				pawn(chess);
 				knight(chess);
 				bishop(chess);
 				rook(chess);
 				king(chess);
 			}
-	if(chess -> mate && check(chess, -1, -1)) {
-		chess -> mate++;
-		if(chess -> turn)
-			chess -> mate++;
+		}
+	}
+	if(chess->mate && check(chess, -1, -1)) {
+		chess->mate++;
+		if(chess->turn) {
+			chess->mate++;
+		}
 	}
 }

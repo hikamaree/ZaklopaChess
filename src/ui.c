@@ -44,6 +44,7 @@ void set_ui(Ui *ui) {
 	ui->sound = true;
 	ui->coordinate = true;
 	ui->new_game = false;
+	ui->start_game = false;
 	ui->game_type = 0;
 	ui->style = 4;
 
@@ -224,19 +225,22 @@ void draw_menu(Ui *ui) {
 	}
 	else if(ui->new_game){
 		if(GuiButton((Rectangle){925, 150, 200, 50}, "SOLO")) {
+			ui->start_game = true;
+			ui->new_game = false;
 			ui->game_type = 1;
-			ui->new_game = !ui->new_game;
 		}
 		if(GuiButton((Rectangle){925, 250, 200, 50}, "ENGINE")) {
+			ui->start_game = true;
+			ui->new_game = false;
 			ui->game_type = 2;
-			ui->new_game = !ui->new_game;
 		}
 		if(GuiButton((Rectangle){925, 350, 200, 50}, "ONLINE")) {
+			ui->start_game = true;
+			ui->new_game = false;
 			ui->game_type = 3;
-			ui->new_game = !ui->new_game;
 		}
 		if(GuiButton((Rectangle){925, 700, 200, 50}, "CANCEL")) {
-			ui->new_game = !ui->new_game;
+			ui->new_game = false;
 		}
 	}
 	else {
@@ -316,23 +320,32 @@ void mouse_input(Ui *ui, Chess *chess, Vector2 coordinate) {
 	}
 }
 
-void render(Chess* chess, Engine* engine) {
+void render(Chess* chess) {
 	InitWindow(1200, 900, "ZaklopaChess");
 	SetTargetFPS(60);
 	InitAudioDevice();
 
 	Ui ui;
 	set_ui(&ui);
-
 	while (!WindowShouldClose()) {
-		if(ui.game_type){
+		if(ui.start_game){
 			new_game(chess);
-			ui.game_type = 0;
+			if(ui.game_type == 2 || ui.game_type == 3) {
+				ui.rotation = false;
+			}
+			ui.start_game = false;
 		}
-		if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+
+		if(!chess->turn && ui.game_type == 2) { 
+			calculate(chess);
+		}
+
+		if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
 			mouse_input(&ui, chess, GetMousePosition());
-		else if(IsGestureDetected(GESTURE_TAP))
+		}
+		else if(IsGestureDetected(GESTURE_TAP)) {
 			mouse_input(&ui, chess, GetTouchPosition(0));
+		}
 		draw(&ui, chess);
 	}
 

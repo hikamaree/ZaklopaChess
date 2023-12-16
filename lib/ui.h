@@ -26,6 +26,7 @@ typedef struct {
 	bool sound;
 	bool coordinate;
 	bool new_game;
+	bool start_game;
 	int game_type;
 	int style;
 
@@ -49,5 +50,5 @@ typedef struct {
 } Ui;
 
 void set_ui(Ui *ui);
-void render(Chess *chess, Engine *engine);
+void render(Chess *chess);
 #endif

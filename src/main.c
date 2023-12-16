@@ -4,9 +4,6 @@ int main() {
 	Chess chess;
 	new_game(&chess);
 
-	Engine engine;
-	set_engine(&engine, &chess);
-
-	render(&chess, &engine);
+	render(&chess);
 	return 0;
 }
