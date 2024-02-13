@@ -1,9 +1,9 @@
+#include "chess.h"
 #include "ui.h"
 
 int main() {
-	Chess chess;
-	new_game(&chess);
-
-	render(&chess);
+	Chess *chess = init_chess();
+	render(chess);
+	delete_chess(chess);
 	return 0;
 }

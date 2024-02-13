@@ -27,6 +27,7 @@ typedef struct {
 	bool coordinate;
 	bool new_game;
 	bool start_game;
+	bool quit;
 	int game_type;
 	int style;
 

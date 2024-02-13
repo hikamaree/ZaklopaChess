@@ -1,4 +1,5 @@
 #include "ui.h"
+#include <stdlib.h>
 
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"
@@ -47,6 +48,7 @@ void set_ui(Ui *ui) {
 	ui->start_game = false;
 	ui->game_type = 0;
 	ui->style = 4;
+	ui->quit = false;
 
 	GuiLoadStyleCyber();
 	GuiSetStyle(DEFAULT, TEXT_SIZE, 20);
@@ -68,6 +70,7 @@ void close_ui(Ui *ui) {
 
 	UnloadSound(ui->move_sound);
 	UnloadSound(ui->capture_sound);
+	free(ui);
 }
 
 void set_style(Ui *ui) {
@@ -114,7 +117,7 @@ void set_style(Ui *ui) {
 }
 
 void draw_coordinate(Ui *ui, bool side) {
-	if(ui -> coordinate) {
+	if(ui->coordinate) {
 		int j;
 		for(int i = 1; i < 9; i++) {
 			if(side) j = 9 - i;
@@ -125,8 +128,10 @@ void draw_coordinate(Ui *ui, bool side) {
 	}
 }
 
-void draw_board(Ui *ui, char position[8][8], int possible[8][8], int x, int y, bool side) {
+void draw_board(Ui *ui, Chess* chess, bool side) {
 	int m, n;
+	int x = chess->x;
+	int y = chess->y;
 	if(!side) {
 		x = 7 - x;
 		y = 7 - y;
@@ -151,7 +156,7 @@ void draw_board(Ui *ui, char position[8][8], int possible[8][8], int x, int y, b
 					DrawRectangle(100 * m + 50, 100 * n + 50, 100, 100, B_SQUARE);
 				}
 			}
-			switch (position[i][j]) {
+			switch (chess->position[i][j]) {
 				case 'K':
 					DrawTexture(ui->w_king, m * 100 + 50, n * 100 + 50, WHITE);
 					break;
@@ -189,21 +194,21 @@ void draw_board(Ui *ui, char position[8][8], int possible[8][8], int x, int y, b
 					DrawTexture(ui->b_pawn, m * 100 + 50, n * 100 + 50, WHITE);
 					break;
 			}
-			if(possible[i][j])
+			if(chess->possible[i][j])
 				DrawCircle(100 * (m + 1), 100 * (n + 1), 25, P_SQUARE); 
 		}
 	}
 }
 
 void draw_menu(Ui *ui) {
-	if(ui -> options) {
+	if(ui->options) {
 		DrawText("ROTATION", 925, 130, 20, GetColor(GuiGetStyle(DEFAULT, LINE_COLOR)));
 		if(GuiButton((Rectangle){925, 150, 200, 50}, ui->rotation ? "ON" : "OFF")) {
 			ui->rotation = !ui->rotation;
 		}
 		DrawText("PERSPECTIVE", 925, 230, 20, GetColor(GuiGetStyle(DEFAULT, LINE_COLOR)));
 		if(GuiButton((Rectangle){925, 250, 200, 50}, ui->perspective ? "WHITE" : "BLACK")) {
-			ui->rotation = !ui->rotation;
+			ui->perspective = !ui->perspective;
 		}
 		DrawText("COORDINATE", 925, 330, 20, GetColor(GuiGetStyle(DEFAULT, LINE_COLOR)));
 		if(GuiButton((Rectangle){925, 350, 200, 50}, ui->coordinate ? "ON" : "OFF")) {
@@ -252,8 +257,7 @@ void draw_menu(Ui *ui) {
 		}
 		if(!WEB) {
 			if(GuiButton((Rectangle){925, 700, 200, 50}, "QUIT")) {
-				close_ui(ui);
-				exit(0);
+				ui->quit = true;
 			}
 		}
 	}
@@ -261,7 +265,7 @@ void draw_menu(Ui *ui) {
 
 void draw_end(Ui *ui, int mate) {
 	if(mate)
-		DrawRectangleRec(ui -> end, END_SCREEN);
+		DrawRectangleRec(ui->end, END_SCREEN);
 	switch (mate) {
 		case 1:
 			DrawText("STALEMATE DRAW", 255, 430, 40, WHITE);
@@ -276,10 +280,10 @@ void draw_end(Ui *ui, int mate) {
 }
 
 void draw(Ui *ui, Chess *chess) {
-	bool side = (ui -> rotation && chess->turn) || (!ui -> rotation && ui -> perspective);
+	bool side = (ui->rotation && chess->turn) || (!ui->rotation && ui->perspective);
 	ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));
 	BeginDrawing();
-	draw_board(ui, chess->position, chess->possible, chess->x, chess->y, side);
+	draw_board(ui, chess, side);
 	draw_coordinate(ui, side);
 	draw_menu(ui);
 	draw_end(ui, chess->mate);
@@ -287,11 +291,11 @@ void draw(Ui *ui, Chess *chess) {
 }
 
 void play_sound(Ui *ui, bool capture) {
-	if(ui -> sound) {
+	if(ui->sound) {
 		if(capture)
-			PlaySound(ui -> capture_sound);
+			PlaySound(ui->capture_sound);
 		else
-			PlaySound(ui -> move_sound);
+			PlaySound(ui->move_sound);
 	}
 }
 
@@ -314,7 +318,7 @@ void mouse_input(Ui *ui, Chess *chess, Vector2 coordinate) {
 
 	if(x != -1 && y != -1) {
 		play(chess, x, y);
-		if(chess -> moved) {
+		if(chess->moved) {
 			play_sound(ui, chess->capture);
 		}
 	}
@@ -325,31 +329,30 @@ void render(Chess* chess) {
 	SetTargetFPS(60);
 	InitAudioDevice();
 
-	Ui ui;
-	set_ui(&ui);
-	while (!WindowShouldClose()) {
-		if(ui.start_game){
+	Ui *ui = (Ui*)calloc(1, sizeof(Ui));
+	set_ui(ui);
+
+	while (!WindowShouldClose() && !ui->quit) {
+		if(ui->start_game){
 			new_game(chess);
-			if(ui.game_type == 2 || ui.game_type == 3) {
-				ui.rotation = false;
+			if(ui->game_type == 2 || ui->game_type == 3) {
+				ui->rotation = false;
 			}
-			ui.start_game = false;
+			ui->start_game = false;
 		}
-
-		if(!chess->turn && ui.game_type == 2) { 
+		// bice jednog dana
+		/*if(!chess->turn && ui->game_type == 2) { 
 			calculate(chess);
-		}
-
+		}*/
 		if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-			mouse_input(&ui, chess, GetMousePosition());
+			mouse_input(ui, chess, GetMousePosition());
 		}
 		else if(IsGestureDetected(GESTURE_TAP)) {
-			mouse_input(&ui, chess, GetTouchPosition(0));
+			mouse_input(ui, chess, GetTouchPosition(0));
 		}
-		draw(&ui, chess);
+		draw(ui, chess);
 	}
-
-	close_ui(&ui);
+	close_ui(ui);
 	CloseAudioDevice();
 	CloseWindow();
 }
