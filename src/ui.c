@@ -1,4 +1,5 @@
 #include "ui.h"
+#include "chess.h"
 #include <stdlib.h>
 
 #define RAYGUI_IMPLEMENTATION
@@ -156,45 +157,47 @@ void draw_board(Ui *ui, Chess* chess, bool side) {
 					DrawRectangle(100 * m + 50, 100 * n + 50, 100, 100, B_SQUARE);
 				}
 			}
-			switch (chess->position[i][j]) {
-				case 'K':
+			switch (chess->board[i][j]) {
+				case WHITE_KING:
 					DrawTexture(ui->w_king, m * 100 + 50, n * 100 + 50, WHITE);
 					break;
-				case 'Q':
+				case WHITE_QUEEN:
 					DrawTexture(ui->w_queen, m * 100 + 50, n * 100 + 50, WHITE);
 					break;
-				case 'R':
+				case WHITE_ROOK:
 					DrawTexture(ui->w_rook, m * 100 + 50, n * 100 + 50, WHITE);
 					break;
-				case 'B':
+				case WHITE_BISHOP:
 					DrawTexture(ui->w_bishop, m * 100 + 50, n * 100 + 50, WHITE);
 					break;
-				case 'N':
+				case WHITE_KNIGHT:
 					DrawTexture(ui->w_knight, m * 100 + 50, n * 100 + 50, WHITE);
 					break;
-				case 'P':
+				case WHITE_PAWN:
 					DrawTexture(ui->w_pawn, m * 100 + 50, n * 100 + 50, WHITE);
 					break;
-				case 'k':
+				case BLACK_KING:
 					DrawTexture(ui->b_king, m * 100 + 50, n * 100 + 50, WHITE);
 					break;
-				case 'q':
+				case BLACK_QUEEN:
 					DrawTexture(ui->b_queen, m * 100 + 50, n * 100 + 50, WHITE);
 					break;
-				case 'r':
+				case BLACK_ROOK:
 					DrawTexture(ui->b_rook, m * 100 + 50, n * 100 + 50, WHITE);
 					break;
-				case 'b':
+				case BLACK_BISHOP:
 					DrawTexture(ui->b_bishop, m * 100 + 50, n * 100 + 50, WHITE);
 					break;
-				case 'n':
+				case BLACK_KNIGHT:
 					DrawTexture(ui->b_knight, m * 100 + 50, n * 100 + 50, WHITE);
 					break;
-				case 'p':
+				case BLACK_PAWN:
 					DrawTexture(ui->b_pawn, m * 100 + 50, n * 100 + 50, WHITE);
 					break;
+				case EMPTY:
+					break;
 			}
-			if(chess->possible[i][j])
+			if(chess->moves[i][j])
 				DrawCircle(100 * (m + 1), 100 * (n + 1), 25, P_SQUARE); 
 		}
 	}
@@ -325,6 +328,7 @@ void mouse_input(Ui *ui, Chess *chess, Vector2 coordinate) {
 }
 
 void render(Chess* chess) {
+	SetTraceLogLevel(LOG_ERROR);
 	InitWindow(1200, 900, "ZaklopaChess");
 	SetTargetFPS(60);
 	InitAudioDevice();

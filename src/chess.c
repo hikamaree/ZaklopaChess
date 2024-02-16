@@ -3,72 +3,50 @@
 
 Chess* init_chess() {
 	Chess* chess = (Chess*)malloc(sizeof(Chess));
-	chess->position = (char**)malloc(8 * sizeof(char*));
-	char *p1 = (char*)malloc(64 * sizeof(char));
+	chess->board = (Board)malloc(8 * sizeof(Square*));
+	Square* p1 = (Square*)malloc(64 * sizeof(Square));
 	for(int i = 0; i < 8; i++) {
-		chess->position[i] = p1 + 8 * i;
+		chess->board[i] = p1 + 8 * i;
 	}
-	chess->possible = (int**)malloc(8 * sizeof(int*));
-	int *p2 = (int*)malloc(64 * sizeof(int));
+	chess->moves = (Move**)malloc(8 * sizeof(Move*));
+	Move *p2 = (Move*)malloc(64 * sizeof(Move));
 	for(int i = 0; i < 8; i++) {
-		chess->possible[i] = p2 + 8 * i;
+		chess->moves[i] = p2 + 8 * i;
 	}
 	new_game(chess);
 	return chess;
 }
 
 void delete_chess(Chess* chess) {
-	free(*chess->position);
-	free(chess->position);
-	free(*chess->possible);
-	free(chess->possible);
+	free(*chess->board);
+	free(chess->board);
+	free(*chess->moves);
+	free(chess->moves);
 	free(chess);
 }
 
-void reset(int** possible) {
-	for(int i = 0; i < 8; i++) {
-		for(int j = 0; j < 8; j++) {
-			possible[i][j] = 0;
-		}
-	}
-}
-
-bool white(char piece) {
-	return piece >= 'A' && piece <= 'Z';
-}
-bool black(char piece) {
-	return piece >= 'a' && piece <= 'z';
-}
-bool piece(char piece) {
-	return white(piece) || black(piece);
-}
-
-void set_possition(Chess* chess, char* position) {
+void set_possition(Chess* chess, char* board) {
 	int x = 0;
 	int y = 0;
-	for(int i = 0; i < 8; i++) {
-		for(int j = 0; j < 8; j++) {
-			chess->position[i][j] = ' ';
-		}
-	}
-	for(int i = 0; position[i] != '\0' && x < 8; position++) {
-		if(position[i] == '/') {
+	memset(*chess->board, EMPTY, 64 * sizeof(char));
+	for(int i = 0; board[i] != '\0' && x < 8; board++) {
+		if(board[i] == '/') {
 			x++;
 			y = 0;
 		}
-		else if(piece(position[i])) {
-			chess->position[x][y] = position[i];
+		else if(piece(board[i])) {
+			chess->board[x][y] = board[i];
 			y++;
 		}
-		else if (position[i] >= '0' && position[i] <= '9') {
-			y += position[i] - '0';
+		else if (board[i] >= '0' && board[i] <= '9') {
+			y += board[i] - '0';
 		}
 	}
 }
 
 void new_game(Chess *chess) {
 	set_possition(chess, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR");
-	reset(chess->possible);
+	reset(chess->moves);
 	chess->x = -1;
 	chess->y = -1;
 	chess->mate = 0;
@@ -83,28 +61,42 @@ void new_game(Chess *chess) {
 }
 
 void select_piece(Chess* chess, int x, int y) {
-	if((chess->ch && ((chess->turn && white(chess->position[x][y])) || (!chess->turn && black(chess->position[x][y])))) ||
-			(!chess->ch && ((chess->turn && black(chess->position[x][y])) || (!chess->turn && white(chess->position[x][y]))))) {
+	if((chess->ch && ((chess->turn && white(chess->board[x][y])) || (!chess->turn && black(chess->board[x][y])))) ||
+			(!chess->ch && ((chess->turn && black(chess->board[x][y])) || (!chess->turn && white(chess->board[x][y]))))) {
 		chess->x = x;
 		chess->y = y;
-		pawn(chess);
-		knight(chess);
-		bishop(chess);
-		rook(chess);
-		king(chess);
+		if(chess->board[chess->x][chess->y] == WHITE_PAWN || chess->board[chess->x][chess->y] == BLACK_PAWN) {
+			pawn(chess);
+		}
+		if(chess->board[chess->x][chess->y] == WHITE_KNIGHT || chess->board[chess->x][chess->y] == BLACK_KNIGHT) {
+			knight(chess);
+		}
+		if(chess->board[chess->x][chess->y] == WHITE_BISHOP || chess->board[chess->x][chess->y] == BLACK_BISHOP) {
+			bishop(chess);
+		}
+		if(chess->board[chess->x][chess->y] == WHITE_ROOK || chess->board[chess->x][chess->y] == BLACK_ROOK) {
+			rook(chess);
+		}
+		if(chess->board[chess->x][chess->y] == WHITE_QUEEN || chess->board[chess->x][chess->y] == BLACK_QUEEN) {
+			bishop(chess);
+			rook(chess);
+		}
+		if(chess->board[chess->x][chess->y] == WHITE_KING || chess->board[chess->x][chess->y] == BLACK_KING) {
+			king(chess);
+		}
 	}
 }
 
 void move_piece(Chess* chess, int x, int y) {
-	if(chess->possible[x][y]) {
+	if(chess->moves[x][y]) {
 		update_enpassant(chess, x, y);
 		castle(chess, x, y);
-		if(chess->position[x][y] != ' ') {
+		if(chess->board[x][y] != EMPTY) {
 			chess->capture = true;
 		}
 		make_move(chess, x, y);
-		chess->position[x][y] = chess->position[chess->x][chess->y];
-		chess->position[chess->x][chess->y] = ' ';
+		chess->board[x][y] = chess->board[chess->x][chess->y];
+		chess->board[chess->x][chess->y] = ' ';
 		promotion(chess, x, y);
 		chess->moved = true;
 		chess->turn = !chess->turn;
@@ -112,7 +104,7 @@ void move_piece(Chess* chess, int x, int y) {
 	}
 	chess->x = -1;
 	chess->y = -1;
-	reset(chess->possible);
+	reset(chess->moves);
 }
 
 void play(Chess *chess, int x, int y) {
@@ -132,7 +124,7 @@ void play_move(Chess* chess, char *move) {
 }
 
 void make_move(Chess* chess, int x1, int y1) {
-	chess->move[0] = chess->position[chess->x][chess->y];
+	chess->move[0] = chess->board[chess->x][chess->y];
 	chess->move[1] = chess->y + 'A';
 	chess->move[2] = '8' - chess->x;
 	chess->move[3] = y1 + 'A';
@@ -141,9 +133,9 @@ void make_move(Chess* chess, int x1, int y1) {
 
 bool check_square(Chess* chess, int x, int y) {
 	if (x >= 0 && x < 8 && y >= 0 && y < 8 && (!chess->ch || !check(chess, x, y)) &&
-			((!white(chess->position[x][y]) && white(chess->position[chess->x][chess->y])) ||
-			 (!black(chess->position[x][y]) && black(chess->position[chess->x][chess->y])))) {
-		if((!chess->turn && chess->position[x][y] == 'k') || (chess->turn && chess->position[x][y] == 'K')) {
+			((!white(chess->board[x][y]) && white(chess->board[chess->x][chess->y])) ||
+			 (!black(chess->board[x][y]) && black(chess->board[chess->x][chess->y])))) {
+		if((!chess->turn && chess->board[x][y] == BLACK_KING) || (chess->turn && chess->board[x][y] == WHITE_KING)) {
 			chess->next_check = true;
 		}
 		if(chess->ch) {
@@ -155,269 +147,244 @@ bool check_square(Chess* chess, int x, int y) {
 }
 
 void pawn(Chess *chess) {
-	if(chess->position[chess->x][chess->y] == 'P') {
-		if(!piece(chess->position[chess->x - 1][chess->y])) {
+	if(chess->board[chess->x][chess->y] == WHITE_PAWN) {
+		if(!piece(chess->board[chess->x - 1][chess->y])) {
 			if(check_square(chess, chess->x - 1, chess->y)) {
-				chess->possible[chess->x - 1][chess->y] = 1;
+				chess->moves[chess->x - 1][chess->y] = POSSIBLE_MOVE;
 			}
-			if(chess->x == 6 && !piece(chess->position[chess->x - 2][chess->y]) && check_square(chess, chess->x - 2, chess->y)) {
-				chess->possible[chess->x - 2][chess->y] = 3;
+			if(chess->x == 6 && !piece(chess->board[chess->x - 2][chess->y]) && check_square(chess, chess->x - 2, chess->y)) {
+				chess->moves[chess->x - 2][chess->y] = ENABLE_ENPASSANT;
 			}
 		}
 		if(chess->x == 3 && chess->enpassant == chess->y - 1 && check_square(chess, chess->x - 1, chess->y - 1)) {
-			chess->possible[chess->x - 1][chess->y - 1] = 2;
+			chess->moves[chess->x - 1][chess->y - 1] = PLAY_ENPASSANT;
 		}
 		if(chess->x == 3 && chess->enpassant == chess->y + 1 && check_square(chess, chess->x - 1, chess->y + 1)) {
-			chess->possible[chess->x - 1][chess->y + 1] = 2;
+			chess->moves[chess->x - 1][chess->y + 1] = PLAY_ENPASSANT;
 		}
-		if(black(chess->position[chess->x - 1][chess->y - 1]) && check_square(chess, chess->x - 1, chess->y - 1)) {
-			chess->possible[chess->x - 1][chess->y - 1] = 1;
+		if(black(chess->board[chess->x - 1][chess->y - 1]) && check_square(chess, chess->x - 1, chess->y - 1)) {
+			chess->moves[chess->x - 1][chess->y - 1] = POSSIBLE_MOVE;
 		}
-		if(black(chess->position[chess->x - 1][chess->y + 1]) && check_square(chess, chess->x - 1, chess->y + 1)) {
-			chess->possible[chess->x - 1][chess->y + 1] = 1;
+		if(black(chess->board[chess->x - 1][chess->y + 1]) && check_square(chess, chess->x - 1, chess->y + 1)) {
+			chess->moves[chess->x - 1][chess->y + 1] = POSSIBLE_MOVE;
 		}
 	}
-	else if(chess->position[chess->x][chess->y] == 'p') {
-		if(!piece(chess->position[chess->x + 1][chess->y])) {
+	else if(chess->board[chess->x][chess->y] == BLACK_PAWN) {
+		if(!piece(chess->board[chess->x + 1][chess->y])) {
 			if(check_square(chess, chess->x + 1, chess->y)) {
-				chess->possible[chess->x + 1][chess->y] = 1;
+				chess->moves[chess->x + 1][chess->y] = POSSIBLE_MOVE;
 			}
-			if(chess->x == 1 && !piece(chess->position[chess->x + 2][chess->y]) && check_square(chess, chess->x + 2, chess->y)) {
-				chess->possible[chess->x + 2][chess->y] = 3;
+			if(chess->x == 1 && !piece(chess->board[chess->x + 2][chess->y]) && check_square(chess, chess->x + 2, chess->y)) {
+				chess->moves[chess->x + 2][chess->y] = ENABLE_ENPASSANT;
 			}
 		}
 		if(chess->x == 4 && chess->enpassant == chess->y - 1 && check_square(chess, chess->x + 1, chess->y - 1)) {
-			chess->possible[chess->x + 1][chess->y - 1] = 2;
+			chess->moves[chess->x + 1][chess->y - 1] = PLAY_ENPASSANT;
 		}
 		if(chess->x == 4 && chess->enpassant == chess->y + 1 && check_square(chess, chess->x + 1, chess->y + 1)) {
-			chess->possible[chess->x + 1][chess->y + 1] = 2;
+			chess->moves[chess->x + 1][chess->y + 1] = PLAY_ENPASSANT;
 		}
-		if(white(chess->position[chess->x + 1][chess->y - 1]) && check_square(chess, chess->x + 1, chess->y - 1)) {
-			chess->possible[chess->x + 1][chess->y - 1] = 1;
+		if(white(chess->board[chess->x + 1][chess->y - 1]) && check_square(chess, chess->x + 1, chess->y - 1)) {
+			chess->moves[chess->x + 1][chess->y - 1] = POSSIBLE_MOVE;
 		}
-		if(white(chess->position[chess->x + 1][chess->y + 1]) && check_square(chess, chess->x + 1, chess->y + 1)) {
-			chess->possible[chess->x + 1][chess->y + 1] = 1;
+		if(white(chess->board[chess->x + 1][chess->y + 1]) && check_square(chess, chess->x + 1, chess->y + 1)) {
+			chess->moves[chess->x + 1][chess->y + 1] = POSSIBLE_MOVE;
 		}
 	}
 }
 
 void promotion(Chess *chess, int x1, int y1) {
-	if(x1 == 0 && chess->position[x1][y1] == 'P') {
-		chess->position[x1][y1] = 'Q';
+	if(x1 == 0 && chess->board[x1][y1] == WHITE_PAWN) {
+		chess->board[x1][y1] = WHITE_QUEEN;
 	}
-	if(x1 == 7 && chess->position[x1][y1] == 'p') {
-		chess->position[x1][y1] = 'q';
+	if(x1 == 7 && chess->board[x1][y1] == BLACK_PAWN) {
+		chess->board[x1][y1] = BLACK_QUEEN;
 	}
 }
 
 void update_enpassant(Chess *chess, int x1, int y1) {
-	if(chess->possible[x1][y1] == 3) {
+	if(chess->moves[x1][y1] == ENABLE_ENPASSANT) {
 		chess->enpassant = y1;
 	}
 	else {
 		chess->enpassant = -1;
 	}
-	if(chess->possible[x1][y1] == 2){
+	if(chess->moves[x1][y1] == PLAY_ENPASSANT){
 		chess->capture = true;
-		if(chess->position[chess->x][chess->y] == 'P') {
-			chess->position[x1 + 1][y1] = ' ';
+		if(chess->board[chess->x][chess->y] == WHITE_PAWN) {
+			chess->board[x1 + 1][y1] = ' ';
 		}
-		else if(chess->position[chess->x][chess->y] == 'p') {
-			chess->position[x1 - 1][y1] = ' ';
+		else if(chess->board[chess->x][chess->y] == BLACK_PAWN) {
+			chess->board[x1 - 1][y1] = ' ';
 		}
 	}
 }
 
 void knight(Chess *chess) {
-	if(chess->position[chess->x][chess->y] == 'N' || chess->position[chess->x][chess->y] == 'n') {
-		if(check_square(chess, chess->x + 2, chess->y + 1)) {
-			chess->possible[chess->x + 2][chess->y + 1] = 1;
-		}
-		if(check_square(chess, chess->x + 2, chess->y - 1)) {
-			chess->possible[chess->x + 2][chess->y - 1] = 1;
-		}
-		if(check_square(chess, chess->x - 2, chess->y + 1)) {
-			chess->possible[chess->x - 2][chess->y + 1] = 1;
-		}
-		if(check_square(chess, chess->x - 2, chess->y - 1)) {
-			chess->possible[chess->x - 2][chess->y - 1] = 1;
-		}
-		if(check_square(chess, chess->x + 1, chess->y + 2)) {
-			chess->possible[chess->x + 1][chess->y + 2] = 1;
-		}
-		if(check_square(chess, chess->x + 1, chess->y - 2)) {
-			chess->possible[chess->x + 1][chess->y - 2] = 1;
-		}
-		if(check_square(chess, chess->x - 1, chess->y + 2)) {
-			chess->possible[chess->x - 1][chess->y + 2] = 1;
-		}
-		if(check_square(chess, chess->x - 1, chess->y - 2)) {
-			chess->possible[chess->x - 1][chess->y - 2] = 1;
+	int8_t jmpx[8] = {1, 1, 2, 2, -1, -1, -2, -2};
+	int8_t jmpy[8] = {2, -2, 1, -1, 2, -2, 1, -1};
+	if(chess->board[chess->x][chess->y] == WHITE_KNIGHT || chess->board[chess->x][chess->y] == BLACK_KNIGHT) {
+		for (int i = 0; i < 8; i++) {
+			if(check_square(chess, chess->x + jmpx[i], chess->y + jmpy[i])) {
+				chess->moves[chess->x + jmpx[i]][chess->y + jmpy[i]] = POSSIBLE_MOVE;
+			}
 		}
 	}
 }
 
 void bishop(Chess *chess) {
-	if(chess->position[chess->x][chess->y] == 'b' || chess->position[chess->x][chess->y] == 'B' ||
-			chess->position[chess->x][chess->y] == 'q' || chess->position[chess->x][chess->y] == 'Q') {
-		for(int i = 1; chess->x + i < 8 && chess->y + i < 8; i++) {
-			if(check_square(chess, chess->x + i, chess->y + i)) {
-				chess->possible[chess->x + i][chess->y + i] = 1;
-			}
-			if(piece(chess->position[chess->x + i][chess->y + i])) {
-				break;
-			}
+	for(int i = 1; chess->x + i < 8 && chess->y + i < 8; i++) {
+		if(check_square(chess, chess->x + i, chess->y + i)) {
+			chess->moves[chess->x + i][chess->y + i] = POSSIBLE_MOVE;
 		}
-		for(int i = 1; chess->x + i < 8 && chess->y - i >= 0; i++) {
-			if(check_square(chess, chess->x + i, chess->y - i)) {
-				chess->possible[chess->x + i][chess->y - i] = 1;
-			}
-			if(piece(chess->position[chess->x + i][chess->y - i])) {
-				break;
-			}
+		if(piece(chess->board[chess->x + i][chess->y + i])) {
+			break;
 		}
-		for(int i = 1; chess->x - i >= 0 && chess->y + i < 8; i++) {
-			if(check_square(chess, chess->x - i, chess->y + i)) {
-				chess->possible[chess->x - i][chess->y + i] = 1;
-			}
-			if(piece(chess->position[chess->x - i][chess->y + i])) {
-				break;
-			}
+	}
+	for(int i = 1; chess->x + i < 8 && chess->y - i >= 0; i++) {
+		if(check_square(chess, chess->x + i, chess->y - i)) {
+			chess->moves[chess->x + i][chess->y - i] = POSSIBLE_MOVE;
 		}
-		for(int i = 1; chess->x - i >= 0 && chess->y - i >= 0; i++) {
-			if(check_square(chess, chess->x - i, chess->y - i)) {
-				chess->possible[chess->x - i][chess->y - i] = 1;
-			}
-			if(piece(chess->position[chess->x - i][chess->y - i])) {
-				break;
-			}
+		if(piece(chess->board[chess->x + i][chess->y - i])) {
+			break;
+		}
+	}
+	for(int i = 1; chess->x - i >= 0 && chess->y + i < 8; i++) {
+		if(check_square(chess, chess->x - i, chess->y + i)) {
+			chess->moves[chess->x - i][chess->y + i] = POSSIBLE_MOVE;
+		}
+		if(piece(chess->board[chess->x - i][chess->y + i])) {
+			break;
+		}
+	}
+	for(int i = 1; chess->x - i >= 0 && chess->y - i >= 0; i++) {
+		if(check_square(chess, chess->x - i, chess->y - i)) {
+			chess->moves[chess->x - i][chess->y - i] = POSSIBLE_MOVE;
+		}
+		if(piece(chess->board[chess->x - i][chess->y - i])) {
+			break;
 		}
 	}
 }
 
 void rook(Chess *chess) {
-	if(chess->position[chess->x][chess->y] == 'r' || chess->position[chess->x][chess->y] == 'R' ||
-			chess->position[chess->x][chess->y] == 'q' || chess->position[chess->x][chess->y] == 'Q') {
-		for(int i = 1; chess->x + i < 8; i++) {
-			if(check_square(chess, chess->x + i, chess->y)) {
-				chess->possible[chess->x + i][chess->y] = 1;
-			}
-			if(piece(chess->position[chess->x + i][chess->y])) {
-				break;
-			}
+	for(int i = 1; chess->x + i < 8; i++) {
+		if(check_square(chess, chess->x + i, chess->y)) {
+			chess->moves[chess->x + i][chess->y] = POSSIBLE_MOVE;
 		}
-		for(int i = 1; chess->x - i >= 0; i++) {
-			if(check_square(chess, chess->x - i, chess->y)) {
-				chess->possible[chess->x - i][chess->y] = 1;
-			}
-			if(piece(chess->position[chess->x - i][chess->y])) {
-				break;
-			}
+		if(piece(chess->board[chess->x + i][chess->y])) {
+			break;
 		}
-		for(int i = 1; chess->y + i < 8; i++) {
-			if(check_square(chess, chess->x, chess->y + i)) {
-				chess->possible[chess->x][chess->y + i] = 1;
-			}
-			if(piece(chess->position[chess->x][chess->y + i])) {
-				break;
-			}
+	}
+	for(int i = 1; chess->x - i >= 0; i++) {
+		if(check_square(chess, chess->x - i, chess->y)) {
+			chess->moves[chess->x - i][chess->y] = POSSIBLE_MOVE;
 		}
-		for(int i = 1; chess->y - i >= 0; i++) {
-			if(check_square(chess, chess->x, chess->y - i)) {
-				chess->possible[chess->x][chess->y - i] = 1;
-			}
-			if(piece(chess->position[chess->x][chess->y - i])) {
-				break;
-			}
+		if(piece(chess->board[chess->x - i][chess->y])) {
+			break;
+		}
+	}
+	for(int i = 1; chess->y + i < 8; i++) {
+		if(check_square(chess, chess->x, chess->y + i)) {
+			chess->moves[chess->x][chess->y + i] = POSSIBLE_MOVE;
+		}
+		if(piece(chess->board[chess->x][chess->y + i])) {
+			break;
+		}
+	}
+	for(int i = 1; chess->y - i >= 0; i++) {
+		if(check_square(chess, chess->x, chess->y - i)) {
+			chess->moves[chess->x][chess->y - i] = POSSIBLE_MOVE;
+		}
+		if(piece(chess->board[chess->x][chess->y - i])) {
+			break;
 		}
 	}
 }
 
 void king(Chess *chess) {
-	if(chess->position[chess->x][chess->y] == 'k' || chess->position[chess->x][chess->y] == 'K') {
-		if(check_square(chess, chess->x + 1, chess->y)) {
-			chess->possible[chess->x + 1][chess->y] = 1;
+	if(check_square(chess, chess->x + 1, chess->y)) {
+		chess->moves[chess->x + 1][chess->y] = POSSIBLE_MOVE;
+	}
+	if(check_square(chess, chess->x - 1, chess->y)) {
+		chess->moves[chess->x - 1][chess->y] = POSSIBLE_MOVE;
+	}
+	if(check_square(chess, chess->x, chess->y + 1)) {
+		chess->moves[chess->x][chess->y + 1] = POSSIBLE_MOVE;
+	}
+	if(check_square(chess, chess->x, chess->y - 1)) {
+		chess->moves[chess->x][chess->y - 1] = POSSIBLE_MOVE;
+	}
+	if(check_square(chess, chess->x + 1, chess->y + 1)) {
+		chess->moves[chess->x + 1][chess->y + 1] = POSSIBLE_MOVE;
+	}
+	if(check_square(chess, chess->x + 1, chess->y - 1)) {
+		chess->moves[chess->x + 1][chess->y - 1] = POSSIBLE_MOVE;
+	}
+	if(check_square(chess, chess->x - 1, chess->y + 1)) {
+		chess->moves[chess->x - 1][chess->y + 1] = POSSIBLE_MOVE;
+	}
+	if(check_square(chess, chess->x - 1, chess->y - 1)) {
+		chess->moves[chess->x - 1][chess->y - 1] = POSSIBLE_MOVE;
+	}
+	if(chess->board[chess->x][chess->y] == WHITE_KING && chess->board[7][5] == ' ' && chess->board[7][6] == ' ' && chess->oo_white) {
+		if(chess->ch && !check(chess, 7, 6) && !check(chess, 7, 5) && !check(chess, 7, 4)) {
+			chess->moves[7][6] = WHITE_OO;
 		}
-		if(check_square(chess, chess->x - 1, chess->y)) {
-			chess->possible[chess->x - 1][chess->y] = 1;
+	}
+	if(chess->board[chess->x][chess->y] == WHITE_KING && chess->board[7][3] == ' ' && chess->board[7][2] == ' ' && chess->board[7][1] == ' ' && chess->ooo_white) {
+		if(chess->ch && !check(chess, 7, 2) && !check(chess, 7, 3) && !check(chess, 7, 4)) {
+			chess->moves[7][2] = WHITE_OOO;
 		}
-		if(check_square(chess, chess->x, chess->y + 1)) {
-			chess->possible[chess->x][chess->y + 1] = 1;
+	}
+	if(chess->board[chess->x][chess->y] == BLACK_KING && chess->board[0][5] == ' ' && chess->board[0][6] == ' ' && chess->oo_black) {
+		if(chess->ch && !check(chess, 0, 6) && !check(chess, 0, 5) && !check(chess, 0, 4)) {
+			chess->moves[0][6] = BLACK_OO;
 		}
-		if(check_square(chess, chess->x, chess->y - 1)) {
-			chess->possible[chess->x][chess->y - 1] = 1;
-		}
-		if(check_square(chess, chess->x + 1, chess->y + 1)) {
-			chess->possible[chess->x + 1][chess->y + 1] = 1;
-		}
-		if(check_square(chess, chess->x + 1, chess->y - 1)) {
-			chess->possible[chess->x + 1][chess->y - 1] = 1;
-		}
-		if(check_square(chess, chess->x - 1, chess->y + 1)) {
-			chess->possible[chess->x - 1][chess->y + 1] = 1;
-		}
-		if(check_square(chess, chess->x - 1, chess->y - 1)) {
-			chess->possible[chess->x - 1][chess->y - 1] = 1;
-		}
-		if(chess->position[chess->x][chess->y] == 'K' && chess->position[7][5] == ' ' && chess->position[7][6] == ' ' && chess->oo_white) {
-			if(chess->ch && !check(chess, 7, 6) && !check(chess, 7, 5) && !check(chess, 7, 4)) {
-				chess->possible[7][6] = 4;
-			}
-		}
-		if(chess->position[chess->x][chess->y] == 'K' && chess->position[7][3] == ' ' && chess->position[7][2] == ' ' && chess->position[7][1] == ' ' && chess->ooo_white) {
-			if(chess->ch && !check(chess, 7, 2) && !check(chess, 7, 3) && !check(chess, 7, 4)) {
-				chess->possible[7][2] = 5;
-			}
-		}
-		if(chess->position[chess->x][chess->y] == 'k' && chess->position[0][5] == ' ' && chess->position[0][6] == ' ' && chess->oo_black) {
-			if(chess->ch && !check(chess, 0, 6) && !check(chess, 0, 5) && !check(chess, 0, 4)) {
-				chess->possible[0][6] = 6;
-			}
-		}
-		if(chess->position[chess->x][chess->y] == 'k' && chess->position[0][3] == ' ' && chess->position[0][2] == ' ' && chess->position[0][1] && chess->ooo_black) {
-			if(chess->ch && !check(chess, 0, 2) && !check(chess, 0, 3) && !check(chess, 0, 4)) {
-				chess->possible[0][2] = 7;
-			}
+	}
+	if(chess->board[chess->x][chess->y] == BLACK_KING && chess->board[0][3] == ' ' && chess->board[0][2] == ' ' && chess->board[0][1] && chess->ooo_black) {
+		if(chess->ch && !check(chess, 0, 2) && !check(chess, 0, 3) && !check(chess, 0, 4)) {
+			chess->moves[0][2] = BLACK_OOO;
 		}
 	}
 }
 
 void castle(Chess *chess, int x1, int y1) {
-	if(chess->position[7][7] != 'R') {
+	if(chess->board[7][7] != WHITE_ROOK) {
 		chess->oo_white = false;
 	}
-	if(chess->position[7][0] != 'R') {
+	if(chess->board[7][0] != WHITE_ROOK) {
 		chess->ooo_white = false;
 	}
-	if(chess->position[7][4] != 'K') {
+	if(chess->board[7][4] != WHITE_KING) {
 		chess->oo_white = false;
 		chess->ooo_white = false;
 	}
-	if(chess->position[0][7] != 'r') {
+	if(chess->board[0][7] != BLACK_ROOK) {
 		chess->oo_black = false;
 	}
-	if(chess->position[0][0] != 'r') {
+	if(chess->board[0][0] != BLACK_ROOK) {
 		chess->ooo_black = false;
 	}
-	if(chess->position[0][4] != 'k') {
+	if(chess->board[0][4] != BLACK_KING) {
 		chess->oo_black = false;
 		chess->ooo_black = false;
 	}
-	if(chess->possible[x1][y1] == 4) {
-		chess->position[7][5] = chess->position[7][7];
-		chess->position[7][7] = ' ';
+	if(chess->moves[x1][y1] == WHITE_OO) {
+		chess->board[7][5] = chess->board[7][7];
+		chess->board[7][7] = ' ';
 	}
-	if(chess->possible[x1][y1] == 5) {
-		chess->position[7][3] = chess->position[7][0];
-		chess->position[7][0] = ' ';
+	if(chess->moves[x1][y1] == WHITE_OOO) {
+		chess->board[7][3] = chess->board[7][0];
+		chess->board[7][0] = ' ';
 	}
-	if(chess->possible[x1][y1] == 6) {
-		chess->position[0][5] = chess->position[0][7];
-		chess->position[0][7] = ' ';
+	if(chess->moves[x1][y1] == BLACK_OO) {
+		chess->board[0][5] = chess->board[0][7];
+		chess->board[0][7] = ' ';
 	}
-	if(chess->possible[x1][y1] == 7) {
-		chess->position[0][3] = chess->position[0][0];
-		chess->position[0][0] = ' ';
+	if(chess->moves[x1][y1] == BLACK_OOO) {
+		chess->board[0][3] = chess->board[0][0];
+		chess->board[0][0] = ' ';
 	}
 }
 
@@ -428,12 +395,12 @@ bool check(Chess *chess, int x1, int y1) {
 	int tmp_y = chess->y;
 	char tmp_piece = ' ';
 	if(x1 != -1) {
-		tmp_piece = chess->position[x1][y1];
-		chess->position[x1][y1] = chess->position[chess->x][chess->y];
-		chess->position[chess->x][chess->y] = ' ';
+		tmp_piece = chess->board[x1][y1];
+		chess->board[x1][y1] = chess->board[chess->x][chess->y];
+		chess->board[chess->x][chess->y] = ' ';
 	}
-	int tmp_possible[64];
-	memcpy(tmp_possible, *chess->possible, 64 * sizeof(int));
+	int tmp_moves[64];
+	memcpy(tmp_moves, *chess->moves, 64 * sizeof(int));
 
 	for(int i = 0; i < 8 && !chess->next_check; i++) {
 		for(int j = 0; j < 8 && !chess->next_check; j++) {
@@ -444,10 +411,10 @@ bool check(Chess *chess, int x1, int y1) {
 	chess->x = tmp_x;
 	chess->y = tmp_y;
 	if(x1 != -1) {
-		chess->position[chess->x][chess->y] = chess->position[x1][y1];
-		chess->position[x1][y1] = tmp_piece;
+		chess->board[chess->x][chess->y] = chess->board[x1][y1];
+		chess->board[x1][y1] = tmp_piece;
 	}
-	memcpy(*chess->possible, tmp_possible, 64 * sizeof(int));
+	memcpy(*chess->moves, tmp_moves, 64 * sizeof(int));
 	chess->ch = true;
 	return chess->next_check;
 }
