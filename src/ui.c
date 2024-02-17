@@ -1,5 +1,6 @@
 #include "ui.h"
 #include "chess.h"
+#include "server.h"
 #include <stdlib.h>
 
 #define RAYGUI_IMPLEMENTATION
@@ -53,6 +54,8 @@ void set_ui(Ui *ui) {
 
 	GuiLoadStyleCyber();
 	GuiSetStyle(DEFAULT, TEXT_SIZE, 20);
+
+	ui->client_data = (ClientData*)malloc(sizeof(ClientData));
 }
 
 void close_ui(Ui *ui) {
@@ -246,6 +249,7 @@ void draw_menu(Ui *ui) {
 			ui->start_game = true;
 			ui->new_game = false;
 			ui->game_type = 3;
+			connect_to_server(ui->client_data);
 		}
 		if(GuiButton((Rectangle){925, 700, 200, 50}, "CANCEL")) {
 			ui->new_game = false;
@@ -335,6 +339,7 @@ void render(Chess* chess) {
 
 	Ui *ui = (Ui*)calloc(1, sizeof(Ui));
 	set_ui(ui);
+	ui->client_data->chess = chess;
 
 	while (!WindowShouldClose() && !ui->quit) {
 		if(ui->start_game){
@@ -346,8 +351,13 @@ void render(Chess* chess) {
 		}
 		// bice jednog dana
 		/*if(!chess->turn && ui->game_type == 2) { 
-			calculate(chess);
-		}*/
+		  calculate(chess);
+		  }*/
+		if(ui->game_type == 3) {
+			if(chess->moved) {
+				send_move(*ui->client_data, chess->move);
+			}
+		}
 		if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
 			mouse_input(ui, chess, GetMousePosition());
 		}

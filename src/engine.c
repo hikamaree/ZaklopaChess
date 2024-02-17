@@ -1,12 +1,12 @@
 #include "engine.h"
 #include "chess.h"
 
-double calc_eval(Chess* chess) {
+double evaluate(Board board) {
 	double white = 0;
 	double black = 0;
 	for(int i = 0; i < 8; i++) {
 		for(int j = 0; j < 8; j++) {
-			switch (chess->board[i][j]) {
+			switch (board[i][j]) {
 				case WHITE_KING:
 					white += 100.0;
 					break;
@@ -52,7 +52,7 @@ double calc_eval(Chess* chess) {
 }
 
 void calculate(Chess* chess) {
-	double eval = calc_eval(chess);
+	double eval = evaluate(chess->board);
 	char move[5];
 	for(int x = 0; x < 8; x++) {
 		for(int y = 0; y < 8; y++) {
@@ -75,7 +75,7 @@ void calculate(Chess* chess) {
 							c1.board[x1][y1] = c1.board[c1.x][c1.y];
 							c1.board[c1.x][c1.y] = ' ';
 							promotion(&c1, x1, y1);
-							double tmp = calc_eval(&c1);
+							double tmp = evaluate(c1.board);
 							if(eval >= tmp) {
 								eval = tmp;
 								memcpy(move, c1.move, 5);

@@ -6,6 +6,7 @@
 
 #include "chess.h"
 #include "engine.h"
+#include "server.h"
 
 #define B_SQUARE (Color){ 110, 109, 107, 255 }
 #define W_SQUARE (Color){ 144, 143, 141, 255 }
@@ -48,6 +49,8 @@ typedef struct {
 	Sound capture_sound;
 
 	Rectangle end;
+
+	ClientData* client_data;
 } Ui;
 
 void set_ui(Ui *ui);
