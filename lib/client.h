@@ -2,7 +2,7 @@
 #define SERVER_H
 
 #include "chess.h"
-#include <bits/pthreadtypes.h>
+#include <pthread.h>
 
 typedef struct {
 	Chess* chess;
