@@ -1,6 +1,5 @@
 #include "ui.h"
 #include "chess.h"
-#include "server.h"
 #include <stdlib.h>
 
 #define RAYGUI_IMPLEMENTATION
@@ -74,6 +73,7 @@ void close_ui(Ui *ui) {
 
 	UnloadSound(ui->move_sound);
 	UnloadSound(ui->capture_sound);
+	free(ui->client_data);
 	free(ui);
 }
 
@@ -243,13 +243,16 @@ void draw_menu(Ui *ui) {
 		if(GuiButton((Rectangle){925, 250, 200, 50}, "ENGINE")) {
 			ui->start_game = true;
 			ui->new_game = false;
+			ui->rotation = false;
 			ui->game_type = 2;
 		}
 		if(GuiButton((Rectangle){925, 350, 200, 50}, "ONLINE")) {
 			ui->start_game = true;
 			ui->new_game = false;
+			ui->rotation = false;
 			ui->game_type = 3;
 			connect_to_server(ui->client_data);
+			ui->perspective = ui->client_data->color;
 		}
 		if(GuiButton((Rectangle){925, 700, 200, 50}, "CANCEL")) {
 			ui->new_game = false;
@@ -331,6 +334,51 @@ void mouse_input(Ui *ui, Chess *chess, Vector2 coordinate) {
 	}
 }
 
+void handle_solo_game(Ui* ui, Chess* chess) {
+	if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+		mouse_input(ui, chess, GetMousePosition());
+	}
+}
+
+void handle_engine_game(Ui* ui, Chess* chess) {
+	// bice jednog dana
+	/*if(!chess->turn && ui->game_type == 2) { 
+	  calculate(chess);
+	  }*/
+	return;
+}
+
+void handle_online_game(Ui* ui, Chess* chess) {
+	if(chess->moved) {
+		send_move(*ui->client_data, chess->move);
+	}
+	if(chess->turn == ui->client_data->color) {
+		if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+			mouse_input(ui, chess, GetMousePosition());
+		}
+	}
+}
+
+void handle_game(Ui* ui, Chess* chess) {
+	if(ui->start_game){
+		new_game(chess);
+		ui->start_game = false;
+	}
+	switch(ui->game_type) {
+		case 1:
+			handle_solo_game(ui, chess);
+			break;
+		case 2:
+			handle_engine_game(ui, chess);
+			break;
+		case 3:
+			handle_online_game(ui, chess);
+			break;
+		default:
+			break;
+	}
+}
+
 void render(Chess* chess) {
 	SetTraceLogLevel(LOG_ERROR);
 	InitWindow(1200, 900, "ZaklopaChess");
@@ -342,28 +390,7 @@ void render(Chess* chess) {
 	ui->client_data->chess = chess;
 
 	while (!WindowShouldClose() && !ui->quit) {
-		if(ui->start_game){
-			new_game(chess);
-			if(ui->game_type == 2 || ui->game_type == 3) {
-				ui->rotation = false;
-			}
-			ui->start_game = false;
-		}
-		// bice jednog dana
-		/*if(!chess->turn && ui->game_type == 2) { 
-		  calculate(chess);
-		  }*/
-		if(ui->game_type == 3) {
-			if(chess->moved) {
-				send_move(*ui->client_data, chess->move);
-			}
-		}
-		if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-			mouse_input(ui, chess, GetMousePosition());
-		}
-		else if(IsGestureDetected(GESTURE_TAP)) {
-			mouse_input(ui, chess, GetTouchPosition(0));
-		}
+		handle_game(ui, chess);
 		draw(ui, chess);
 	}
 	close_ui(ui);

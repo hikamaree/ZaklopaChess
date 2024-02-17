@@ -5,7 +5,7 @@
 #include <arpa/inet.h>
 #include <pthread.h>
 #include "chess.h"
-#include "server.h"
+#include "client.h"
 
 #define PORT 8080
 #define MAX_BUFFER_SIZE 8
@@ -37,7 +37,7 @@ void connect_to_server(ClientData* data) {
 
 	memset(&serverAddr, 0, sizeof(serverAddr));
 	serverAddr.sin_family = AF_INET;
-	serverAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+	serverAddr.sin_addr.s_addr = inet_addr("192.168.100.246");
 	serverAddr.sin_port = htons(PORT);
 
 	if (connect(data->clientSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) == -1) {
@@ -46,6 +46,8 @@ void connect_to_server(ClientData* data) {
 	}
 
 	printf("Connected to the server\n");
+	recv(data->clientSocket, &data->color, sizeof(data->color), 0);
+	printf("Player color: %s\n", data->color ? "white" : "black");
 
 	if (pthread_create(&data->receiveThreadId, NULL, receive_move, (void*)data) != 0) {
 		perror("Thread creation failed");

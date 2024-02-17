@@ -8,6 +8,7 @@ typedef struct {
 	Chess* chess;
 	int clientSocket;
 	pthread_t receiveThreadId;
+	bool color;
 } ClientData;
 
 void start_server();
