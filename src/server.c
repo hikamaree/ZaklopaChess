@@ -1,3 +1,4 @@
+#include "server.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,13 +8,7 @@
 #include <pthread.h>
 #include <stdbool.h>
 
-#define PORT 8080
 #define MAX_BUFFER_SIZE 1024
-
-typedef struct {
-	int clientSocket;
-	pthread_t threadId;
-} ClientInfo;
 
 ClientInfo clients[2];
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -51,7 +46,7 @@ void *handleClient(void *clientInfo) {
 	pthread_exit(NULL);
 }
 
-int main() {
+void enable_server() {
 	srand(time(0));
 	bool color = rand() % 2;
 	int serverSocket;
@@ -101,5 +96,4 @@ int main() {
 	}
 
 	close(serverSocket);
-	return 0;
 }

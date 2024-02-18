@@ -1,5 +1,7 @@
 #include "ui.h"
 #include "chess.h"
+#include "client.h"
+#include "server.h"
 #include <stdlib.h>
 
 #define RAYGUI_IMPLEMENTATION
@@ -46,6 +48,8 @@ void set_ui(Ui *ui) {
 	ui->sound = true;
 	ui->coordinate = true;
 	ui->new_game = false;
+	ui->online_menu = false;
+	ui->enter_ip = false;
 	ui->start_game = false;
 	ui->game_type = 0;
 	ui->style = 4;
@@ -55,6 +59,7 @@ void set_ui(Ui *ui) {
 	GuiSetStyle(DEFAULT, TEXT_SIZE, 20);
 
 	ui->client_data = (ClientData*)malloc(sizeof(ClientData));
+	memcpy (ui->client_data->ip_address, "127.0.0.1", 10 * sizeof(char));
 }
 
 void close_ui(Ui *ui) {
@@ -206,7 +211,25 @@ void draw_board(Ui *ui, Chess* chess, bool side) {
 	}
 }
 
-void draw_menu(Ui *ui) {
+void resign(Ui *ui, Chess* chess) {
+	if(ui->game_type != 0) {
+		if(GuiButton((Rectangle){925, 350, 200, 50}, "RESIGN")) {
+			if(chess->turn && ui->game_type != 0) {
+				chess->mate = 3;
+			}
+			else if(ui->game_type != 0) {
+				chess->mate = 2;
+			}
+			ui->game_type = 0;
+		}
+		//drugi igrac treba da skonta da je ovaj predao
+		/*if(ui->game_type == 3) {
+			disconnect(*(ui->client_data));
+		}*/
+	}
+}
+
+void draw_menu(Ui *ui, Chess* chess) {
 	if(ui->options) {
 		DrawText("ROTATION", 925, 130, 20, GetColor(GuiGetStyle(DEFAULT, LINE_COLOR)));
 		if(GuiButton((Rectangle){925, 150, 200, 50}, ui->rotation ? "ON" : "OFF")) {
@@ -234,6 +257,35 @@ void draw_menu(Ui *ui) {
 			ui->options = !ui->options;
 		}
 	}
+	else if(ui->online_menu) {
+		if(GuiButton((Rectangle){925, 150, 200, 50}, "HOST GAME")) {
+			ui->start_game = true;
+			ui->new_game = false;
+			ui->online_menu = false;
+			ui->rotation = false;
+			ui->game_type = 3;
+			//ovde treba da se nekako startuje server
+			enable_server();
+			memcpy (ui->client_data->ip_address, "127.0.0.1", 10 * sizeof(char));
+			connect_to_server(ui->client_data);
+			ui->perspective = ui->client_data->color;
+		}
+		if (GuiTextBox((Rectangle){925, 250, 200, 50}, ui->client_data->ip_address, 32, ui->enter_ip)) {
+			ui->enter_ip = !ui->enter_ip;
+		}
+		if(GuiButton((Rectangle){925, 350, 200, 50}, "CONNECT")) {
+			ui->start_game = true;
+			ui->new_game = false;
+			ui->online_menu = false;
+			ui->rotation = false;
+			ui->game_type = 3;
+			connect_to_server(ui->client_data);
+			ui->perspective = ui->client_data->color;
+		}
+		if(GuiButton((Rectangle){925, 700, 200, 50}, "CANCEL")) {
+			ui->online_menu = false;
+		}
+	}
 	else if(ui->new_game){
 		if(GuiButton((Rectangle){925, 150, 200, 50}, "SOLO")) {
 			ui->start_game = true;
@@ -247,12 +299,7 @@ void draw_menu(Ui *ui) {
 			ui->game_type = 2;
 		}
 		if(GuiButton((Rectangle){925, 350, 200, 50}, "ONLINE")) {
-			ui->start_game = true;
-			ui->new_game = false;
-			ui->rotation = false;
-			ui->game_type = 3;
-			connect_to_server(ui->client_data);
-			ui->perspective = ui->client_data->color;
+			ui->online_menu = !ui->online_menu;
 		}
 		if(GuiButton((Rectangle){925, 700, 200, 50}, "CANCEL")) {
 			ui->new_game = false;
@@ -265,6 +312,7 @@ void draw_menu(Ui *ui) {
 		if(GuiButton((Rectangle){925, 250, 200, 50}, "OPTIONS")) {
 			ui->options = !ui->options;
 		}
+		resign(ui, chess);
 		if(!WEB) {
 			if(GuiButton((Rectangle){925, 700, 200, 50}, "QUIT")) {
 				ui->quit = true;
@@ -278,13 +326,13 @@ void draw_end(Ui *ui, int mate) {
 		DrawRectangleRec(ui->end, END_SCREEN);
 	switch (mate) {
 		case 1:
-			DrawText("STALEMATE DRAW", 255, 430, 40, WHITE);
+			DrawText("DRAW", 400, 430, 40, WHITE);
 			break;
 		case 2:
-			DrawText("CHECKMATE WHITE WON", 200, 430, 40, WHITE);
+			DrawText("WHITE WON", 330, 430, 40, WHITE);
 			break;
 		case 3:
-			DrawText("CHECKMATE BLACK WON", 200, 430, 40, WHITE);
+			DrawText("BLACK WON", 330, 430, 40, WHITE);
 			break;
 	}
 }
@@ -295,17 +343,19 @@ void draw(Ui *ui, Chess *chess) {
 	BeginDrawing();
 	draw_board(ui, chess, side);
 	draw_coordinate(ui, side);
-	draw_menu(ui);
+	draw_menu(ui, chess);
 	draw_end(ui, chess->mate);
 	EndDrawing();
 }
 
 void play_sound(Ui *ui, bool capture) {
 	if(ui->sound) {
-		if(capture)
+		if(capture) {
 			PlaySound(ui->capture_sound);
-		else
+		}
+		else {
 			PlaySound(ui->move_sound);
+		}
 	}
 }
 
@@ -389,7 +439,7 @@ void render(Chess* chess) {
 	set_ui(ui);
 	ui->client_data->chess = chess;
 
-	while (!WindowShouldClose() && !ui->quit) {
+	while(!ui->quit) {
 		handle_game(ui, chess);
 		draw(ui, chess);
 	}

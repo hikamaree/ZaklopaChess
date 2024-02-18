@@ -1,5 +1,5 @@
-#ifndef SERVER_H
-#define SERVER_H
+#ifndef CLIENT_H
+#define CLIENT_H
 
 #include "chess.h"
 #include <pthread.h>
@@ -8,6 +8,7 @@ typedef struct {
 	Chess* chess;
 	int clientSocket;
 	pthread_t receiveThreadId;
+	char ip_address[20];
 	bool color;
 } ClientData;
 

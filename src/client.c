@@ -37,7 +37,7 @@ void connect_to_server(ClientData* data) {
 
 	memset(&serverAddr, 0, sizeof(serverAddr));
 	serverAddr.sin_family = AF_INET;
-	serverAddr.sin_addr.s_addr = inet_addr("192.168.100.246");
+	serverAddr.sin_addr.s_addr = inet_addr(data->ip_address);
 	serverAddr.sin_port = htons(PORT);
 
 	if (connect(data->clientSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) == -1) {
@@ -62,7 +62,7 @@ void send_move(ClientData data, const char move[]) {
 	}
 }
 
-void disconect(ClientData data) {
+void disconnect(ClientData data) {
 	close(data.clientSocket);
 	pthread_join(data.receiveThreadId, NULL);
 }
