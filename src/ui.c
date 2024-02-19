@@ -1,7 +1,5 @@
 #include "ui.h"
 #include "chess.h"
-#include "client.h"
-#include "server.h"
 #include <stdlib.h>
 
 #define RAYGUI_IMPLEMENTATION
@@ -264,8 +262,7 @@ void draw_menu(Ui *ui, Chess* chess) {
 			ui->online_menu = false;
 			ui->rotation = false;
 			ui->game_type = 3;
-			//ovde treba da se nekako startuje server
-			enable_server();
+			start_server();
 			memcpy (ui->client_data->ip_address, "127.0.0.1", 10 * sizeof(char));
 			connect_to_server(ui->client_data);
 			ui->perspective = ui->client_data->color;
@@ -399,13 +396,13 @@ void handle_engine_game(Ui* ui, Chess* chess) {
 }
 
 void handle_online_game(Ui* ui, Chess* chess) {
-	if(chess->moved) {
-		send_move(*ui->client_data, chess->move);
-	}
 	if(chess->turn == ui->client_data->color) {
 		if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
 			mouse_input(ui, chess, GetMousePosition());
 		}
+	}
+	if(chess->moved) {
+		send_move(*ui->client_data, chess->move);
 	}
 }
 

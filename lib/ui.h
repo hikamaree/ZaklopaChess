@@ -6,7 +6,7 @@
 
 #include "chess.h"
 #include "engine.h"
-#include "client.h"
+#include "server.h"
 
 #define B_SQUARE (Color){ 110, 109, 107, 255 }
 #define W_SQUARE (Color){ 144, 143, 141, 255 }
