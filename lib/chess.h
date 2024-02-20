@@ -35,6 +35,13 @@ typedef enum : int8_t {
 	BLACK_OOO = 7,
 } Move;
 
+typedef enum : uint8_t {
+	NONE = 0,
+	DRAW,
+	WHITE_WON,
+	BLACK_WON,
+} Mate;
+
 typedef struct {
 	bool ch;
 	bool next_check;
@@ -51,8 +58,11 @@ typedef struct {
 	bool turn;
 	bool moved;
 	bool capture;
-	int mate;
+	Mate mate;
 } Chess;
+
+#define RESIGN_WHITE "R"
+#define RESIGN_BLACK "r"
 
 #define reset(moves) (memset(*moves, 0, 64 * sizeof(Move)))
 

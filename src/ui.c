@@ -1,5 +1,6 @@
 #include "ui.h"
 #include "chess.h"
+#include "server.h"
 #include <stdlib.h>
 
 #define RAYGUI_IMPLEMENTATION
@@ -212,18 +213,15 @@ void draw_board(Ui *ui, Chess* chess, bool side) {
 void resign(Ui *ui, Chess* chess) {
 	if(ui->game_type != 0) {
 		if(GuiButton((Rectangle){925, 350, 200, 50}, "RESIGN")) {
-			if(chess->turn && ui->game_type != 0) {
-				chess->mate = 3;
+			if(ui->game_type == 1) {
+				chess->mate = chess->turn ? BLACK_WON: WHITE_WON;
 			}
-			else if(ui->game_type != 0) {
-				chess->mate = 2;
+			if(ui->game_type == 3) {
+				chess->mate = ui->client_data->color ? BLACK_WON : WHITE_WON;
+				send_move(*(ui->client_data), ui->client_data->color ? RESIGN_WHITE : RESIGN_BLACK);
 			}
 			ui->game_type = 0;
 		}
-		//drugi igrac treba da skonta da je ovaj predao
-		/*if(ui->game_type == 3) {
-			disconnect(*(ui->client_data));
-		}*/
 	}
 }
 
@@ -261,6 +259,7 @@ void draw_menu(Ui *ui, Chess* chess) {
 			ui->new_game = false;
 			ui->online_menu = false;
 			ui->rotation = false;
+			ui->client_data->host = true;
 			ui->game_type = 3;
 			start_server();
 			memcpy (ui->client_data->ip_address, "127.0.0.1", 10 * sizeof(char));
@@ -275,6 +274,7 @@ void draw_menu(Ui *ui, Chess* chess) {
 			ui->new_game = false;
 			ui->online_menu = false;
 			ui->rotation = false;
+			ui->client_data->host = false;
 			ui->game_type = 3;
 			connect_to_server(ui->client_data);
 			ui->perspective = ui->client_data->color;
@@ -319,16 +319,17 @@ void draw_menu(Ui *ui, Chess* chess) {
 }
 
 void draw_end(Ui *ui, int mate) {
-	if(mate)
+	if(mate) {
 		DrawRectangleRec(ui->end, END_SCREEN);
+	}
 	switch (mate) {
-		case 1:
+		case DRAW:
 			DrawText("DRAW", 400, 430, 40, WHITE);
 			break;
-		case 2:
+		case WHITE_WON:
 			DrawText("WHITE WON", 330, 430, 40, WHITE);
 			break;
-		case 3:
+		case BLACK_WON:
 			DrawText("BLACK WON", 330, 430, 40, WHITE);
 			break;
 	}
@@ -403,6 +404,9 @@ void handle_online_game(Ui* ui, Chess* chess) {
 	}
 	if(chess->moved) {
 		send_move(*ui->client_data, chess->move);
+	}
+	if(chess->mate) {
+		ui->game_type = 0;
 	}
 }
 

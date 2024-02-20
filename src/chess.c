@@ -49,7 +49,7 @@ void new_game(Chess *chess) {
 	reset(chess->moves);
 	chess->x = -1;
 	chess->y = -1;
-	chess->mate = 0;
+	chess->mate = NONE;
 	chess->enpassant = -1;
 	chess->oo_white = true;
 	chess->ooo_white = true;
@@ -119,6 +119,14 @@ void play(Chess *chess, int x, int y) {
 }
 
 void play_move(Chess* chess, char *move) {
+	if(!strcmp(move, RESIGN_WHITE)) {
+		chess->mate = BLACK_WON;
+		return;
+	}
+	if(!strcmp(move, RESIGN_BLACK)) {
+		chess->mate = WHITE_WON;
+		return;
+	}
 	play(chess, '8' - move[2], move[1] - 'A');
 	play(chess, '8' - move[4], move[3] - 'A');
 }
@@ -139,7 +147,7 @@ bool check_square(Chess* chess, int x, int y) {
 			chess->next_check = true;
 		}
 		if(chess->ch) {
-			chess->mate = 0;
+			chess->mate = NONE;
 		}
 		return true;
 	}
@@ -420,16 +428,16 @@ bool check(Chess *chess, int x1, int y1) {
 }
 
 void check_mate(Chess *chess) {
-	chess->mate = 1;
+	chess->mate = DRAW;
 	for(int i = 0; i < 8; i++) {
 		for(int j = 0; j < 8; j++) {
 			select_piece(chess, i, j);
 		}
 	}
 	if(chess->mate && check(chess, -1, -1)) {
-		chess->mate = 2;
+		chess->mate = WHITE_WON;
 		if(chess->turn) {
-			chess->mate = 3;
+			chess->mate = BLACK_WON;
 		}
 	}
 }

@@ -26,12 +26,12 @@ void *handle_client(void *client_info) {
 	int socket = info->socket;
 	char buffer[MAX_BUFFER_SIZE];
 
-	while (1) {
+	while(1) {
 		memset(buffer, 0, sizeof(buffer));
 
 		if (recv(socket, buffer, sizeof(buffer), 0) == -1) {
 			perror("Receive failed");
-			exit(EXIT_FAILURE);
+			break;
 		}
 
 		pthread_mutex_lock(&mutex);
@@ -52,7 +52,7 @@ void* enable_server() {
 
 	if ((server_socket = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
 		perror("Socket creation failed");
-		exit(EXIT_FAILURE);
+		return NULL;
 	}
 
 	memset(&server_addr, 0, sizeof(server_addr));
@@ -62,12 +62,12 @@ void* enable_server() {
 
 	if (bind(server_socket, (struct sockaddr*)&server_addr, sizeof(server_addr)) == -1) {
 		perror("Binding failed");
-		exit(EXIT_FAILURE);
+		return NULL;
 	}
 
 	if (listen(server_socket, 2) == -1) {
 		perror("Listening failed");
-		exit(EXIT_FAILURE);
+		return NULL;
 	}
 
 	printf("Server listening on port %d...\n", PORT);
@@ -75,14 +75,14 @@ void* enable_server() {
 	for (int i = 0; i < 2; i++) {
 		if ((clients[i].socket = accept(server_socket, (struct sockaddr*)&server_addr, &addr_size)) == -1) {
 			perror("Acceptance failed");
-			exit(EXIT_FAILURE);
+			return NULL;
 		}
 
 		printf("Connection accepted from %s:%d\n", inet_ntoa(server_addr.sin_addr), ntohs(server_addr.sin_port));
 
 		if (pthread_create(&clients[i].thread_id, NULL, handle_client, (void*)&clients[i]) != 0) {
 			perror("Thread creation failed");
-			exit(EXIT_FAILURE);
+			return NULL;
 		}
 		send(clients[i].socket, &color, sizeof(color), 0);
 		color = !color;
@@ -158,5 +158,4 @@ void send_move(ClientData data, const char move[]) {
 
 void disconnect(ClientData data) {
 	close(data.socket);
-	pthread_join(data.thread_id, NULL);
 }
