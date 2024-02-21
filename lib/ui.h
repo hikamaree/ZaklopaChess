@@ -2,10 +2,8 @@
 #define UI_H
 
 #include <raylib.h>
-#include <stdlib.h>
 
 #include "chess.h"
-#include "engine.h"
 #include "server.h"
 
 #define B_SQUARE (Color){ 110, 109, 107, 255 }

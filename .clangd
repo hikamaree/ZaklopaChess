@@ -1,2 +1,6 @@
 CompileFlags:
-  Add: --include-directory=../lib
+  Add: [
+    "-xc",
+    "-std=c17",
+    "--include-directory=../lib",
+  ]

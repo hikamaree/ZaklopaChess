@@ -2,8 +2,6 @@
 #define GAME_H
 
 #include <stdint.h>
-#include <stdio.h>
-#include <string.h>
 #include <stdbool.h>
 
 typedef enum : char {
@@ -21,8 +19,6 @@ typedef enum : char {
 	BLACK_QUEEN = 'q',
 	BLACK_KING = 'k',
 } Square;
-
-typedef Square** Board;
 
 typedef enum : int8_t {
 	INPOSSIBLE_MOVE = 0,
@@ -51,7 +47,7 @@ typedef struct {
 	bool ooo_black;
 	int enpassant;
 	char move[5];
-	Board board;
+	Square** board;
 	Move** moves;
 	int x;
 	int y;
@@ -65,30 +61,16 @@ typedef struct {
 #define RESIGN_BLACK "r"
 
 #define reset(moves) (memset(*moves, 0, 64 * sizeof(Move)))
-
 #define white(piece) (piece >= 'A' && piece <= 'Z')
 #define black(piece) (piece >= 'a' && piece <= 'z')
 #define piece(square) (black(square) || white(square))
 
 Chess* init_chess();
-void delete_chess(Chess* chess);
+void delete_chess(Chess*);
 
-void new_game(Chess *chess);
-void play(Chess* chess, int x, int y);
-void play_move(Chess* chess, char* move);
-
-bool check_square(Chess *chess, int x1, int y1);
-void update_enpassant(Chess *chess, int x1, int y1);
-void promotion(Chess *chess, int x1, int y1);
-void castle(Chess *chess, int x1, int y1);
-void make_move(Chess *chess, int x1, int y1);
-bool check(Chess *chess, int x1, int y1);
-void check_mate(Chess *chess);
-
-void pawn(Chess *chess);
-void knight(Chess *chess);
-void bishop(Chess *chess);
-void rook(Chess *chess);
-void king(Chess *chess);
+void new_game(Chess*);
+void play(Chess*, const int, const int);
+void play_move(Chess*, const char*);
+void set_possition(Chess*, const char*);
 
 #endif

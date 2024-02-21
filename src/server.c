@@ -12,11 +12,12 @@ pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 void broadcast_message(char *message, int socket) {
 	for (int i = 0; i < 2; i++) {
-		if (clients[i].socket != socket) {
-			if (send(clients[i].socket, message, strlen(message), 0) == -1) {
-				perror("Send failed");
-				exit(EXIT_FAILURE);
-			}
+		if(clients[i].socket == socket) {
+			continue;
+		}
+		if(send(clients[i].socket, message, strlen(message), 0) == -1) {
+			perror("Send failed");
+			return;
 		}
 	}
 }
@@ -99,8 +100,8 @@ void* enable_server() {
 void start_server() {
 	pthread_t tid;
 	if (pthread_create(&tid, NULL, enable_server, NULL) != 0) {
-		perror("pthread_create");
-		exit(EXIT_FAILURE);
+		perror("Thread creation failed");
+		return;
 	}
 	sleep(1.0);
 }
@@ -114,9 +115,13 @@ void *receive_move(void *d) {
 
 		if (recv(data->socket, buffer, sizeof(buffer), 0) == -1) {
 			perror("Receive failed");
-			exit(EXIT_FAILURE);
+			break;
+		}
+		else {
+			data->received = true;
 		}
 		play_move(data->chess, buffer);
+		printf("%s\n", buffer);
 	}
 	pthread_exit(NULL);
 }
@@ -126,7 +131,7 @@ void connect_to_server(ClientData* data) {
 
 	if ((data->socket = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
 		perror("Socket creation failed");
-		exit(EXIT_FAILURE);
+		return;
 	}
 
 	memset(&server_addr, 0, sizeof(server_addr));
@@ -136,7 +141,7 @@ void connect_to_server(ClientData* data) {
 
 	if (connect(data->socket, (struct sockaddr*)&server_addr, sizeof(server_addr)) == -1) {
 		perror("Connection failed");
-		exit(EXIT_FAILURE);
+		return;
 	}
 
 	printf("Connected to the server\n");
@@ -145,17 +150,15 @@ void connect_to_server(ClientData* data) {
 
 	if (pthread_create(&data->thread_id, NULL, receive_move, (void*)data) != 0) {
 		perror("Thread creation failed");
-		exit(EXIT_FAILURE);
 	}
 }
 
-void send_move(ClientData data, const char move[]) {
-	if (send(data.socket, move, strlen(move), 0) == -1) {
+void send_move(ClientData* data, const char move[]) {
+	if (send(data->socket, move, strlen(move), 0) == -1) {
 		perror("Send failed");
-		exit(EXIT_FAILURE);
 	}
 }
 
-void disconnect(ClientData data) {
-	close(data.socket);
+void disconnect(ClientData* data) {
+	close(data->socket);
 }

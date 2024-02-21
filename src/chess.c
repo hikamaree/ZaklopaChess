@@ -1,9 +1,27 @@
 #include "chess.h"
 #include <stdlib.h>
+#include <string.h>
+
+void select_piece(Chess* chess, int x, int y);
+void move_piece(Chess* chess, int x, int y);
+void make_move(Chess *chess, int x, int y);
+
+bool check_square(Chess *chess, int x, int y);
+void update_enpassant(Chess *chess, int x, int y);
+void promotion(Chess *chess, int x, int y);
+void castle(Chess *chess, int x, int y);
+bool check(Chess *chess, int x, int y);
+void check_mate(Chess *chess);
+
+void pawn(Chess *chess);
+void knight(Chess *chess);
+void bishop(Chess *chess);
+void rook(Chess *chess);
+void king(Chess *chess);
 
 Chess* init_chess() {
 	Chess* chess = (Chess*)malloc(sizeof(Chess));
-	chess->board = (Board)malloc(8 * sizeof(Square*));
+	chess->board = (Square**)malloc(8 * sizeof(Square*));
 	Square* p1 = (Square*)malloc(64 * sizeof(Square));
 	for(int i = 0; i < 8; i++) {
 		chess->board[i] = p1 + 8 * i;
@@ -25,7 +43,7 @@ void delete_chess(Chess* chess) {
 	free(chess);
 }
 
-void set_possition(Chess* chess, char* board) {
+void set_possition(Chess* chess, const char* board) {
 	int x = 0;
 	int y = 0;
 	memset(*chess->board, EMPTY, 64 * sizeof(char));
@@ -44,7 +62,7 @@ void set_possition(Chess* chess, char* board) {
 	}
 }
 
-void new_game(Chess *chess) {
+void new_game(Chess* chess) {
 	set_possition(chess, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR");
 	reset(chess->moves);
 	chess->x = -1;
@@ -60,7 +78,7 @@ void new_game(Chess *chess) {
 	chess->ch = true;
 }
 
-void select_piece(Chess* chess, int x, int y) {
+void select_piece(Chess* chess, const int x, const int y) {
 	if((chess->ch && ((chess->turn && white(chess->board[x][y])) || (!chess->turn && black(chess->board[x][y])))) ||
 			(!chess->ch && ((chess->turn && black(chess->board[x][y])) || (!chess->turn && white(chess->board[x][y]))))) {
 		chess->x = x;
@@ -87,7 +105,7 @@ void select_piece(Chess* chess, int x, int y) {
 	}
 }
 
-void move_piece(Chess* chess, int x, int y) {
+void move_piece(Chess* chess, const int x, const int y) {
 	if(chess->moves[x][y]) {
 		update_enpassant(chess, x, y);
 		castle(chess, x, y);
@@ -107,7 +125,7 @@ void move_piece(Chess* chess, int x, int y) {
 	reset(chess->moves);
 }
 
-void play(Chess *chess, int x, int y) {
+void play(Chess *chess, const int x, const int y) {
 	chess->capture = false;
 	chess->moved = false;
 	if(chess->x == -1 || chess->y == -1) {
@@ -118,7 +136,7 @@ void play(Chess *chess, int x, int y) {
 	}
 }
 
-void play_move(Chess* chess, char *move) {
+void play_move(Chess* chess, const char *move) {
 	if(!strcmp(move, RESIGN_WHITE)) {
 		chess->mate = BLACK_WON;
 		return;
@@ -127,19 +145,19 @@ void play_move(Chess* chess, char *move) {
 		chess->mate = WHITE_WON;
 		return;
 	}
-	play(chess, '8' - move[2], move[1] - 'A');
-	play(chess, '8' - move[4], move[3] - 'A');
+	play(chess, '8' - move[1], move[0] - 'A');
+	play(chess, '8' - move[3], move[2] - 'A');
 }
 
-void make_move(Chess* chess, int x1, int y1) {
-	chess->move[0] = chess->board[chess->x][chess->y];
-	chess->move[1] = chess->y + 'A';
-	chess->move[2] = '8' - chess->x;
-	chess->move[3] = y1 + 'A';
-	chess->move[4] = '8' - x1;
+void make_move(Chess* chess, const int x, const int y) {
+	chess->move[0] = chess->y + 'A';
+	chess->move[1] = '8' - chess->x;
+	chess->move[2] = y + 'A';
+	chess->move[3] = '8' - x;
+	chess->move[4] = '\0';
 }
 
-bool check_square(Chess* chess, int x, int y) {
+bool check_square(Chess* chess, const int x, const int y) {
 	if (x >= 0 && x < 8 && y >= 0 && y < 8 && (!chess->ch || !check(chess, x, y)) &&
 			((!white(chess->board[x][y]) && white(chess->board[chess->x][chess->y])) ||
 			 (!black(chess->board[x][y]) && black(chess->board[chess->x][chess->y])))) {
@@ -201,29 +219,29 @@ void pawn(Chess *chess) {
 	}
 }
 
-void promotion(Chess *chess, int x1, int y1) {
-	if(x1 == 0 && chess->board[x1][y1] == WHITE_PAWN) {
-		chess->board[x1][y1] = WHITE_QUEEN;
+void promotion(Chess *chess, const int x, const int y) {
+	if(x == 0 && chess->board[x][y] == WHITE_PAWN) {
+		chess->board[x][y] = WHITE_QUEEN;
 	}
-	if(x1 == 7 && chess->board[x1][y1] == BLACK_PAWN) {
-		chess->board[x1][y1] = BLACK_QUEEN;
+	if(x == 7 && chess->board[x][y] == BLACK_PAWN) {
+		chess->board[x][y] = BLACK_QUEEN;
 	}
 }
 
-void update_enpassant(Chess *chess, int x1, int y1) {
-	if(chess->moves[x1][y1] == ENABLE_ENPASSANT) {
-		chess->enpassant = y1;
+void update_enpassant(Chess *chess, const int x, const int y) {
+	if(chess->moves[x][y] == ENABLE_ENPASSANT) {
+		chess->enpassant = y;
 	}
 	else {
 		chess->enpassant = -1;
 	}
-	if(chess->moves[x1][y1] == PLAY_ENPASSANT){
+	if(chess->moves[x][y] == PLAY_ENPASSANT){
 		chess->capture = true;
 		if(chess->board[chess->x][chess->y] == WHITE_PAWN) {
-			chess->board[x1 + 1][y1] = ' ';
+			chess->board[x + 1][y] = ' ';
 		}
 		else if(chess->board[chess->x][chess->y] == BLACK_PAWN) {
-			chess->board[x1 - 1][y1] = ' ';
+			chess->board[x - 1][y] = ' ';
 		}
 	}
 }
@@ -357,7 +375,7 @@ void king(Chess *chess) {
 	}
 }
 
-void castle(Chess *chess, int x1, int y1) {
+void castle(Chess *chess, const int x, const int y) {
 	if(chess->board[7][7] != WHITE_ROOK) {
 		chess->oo_white = false;
 	}
@@ -378,33 +396,33 @@ void castle(Chess *chess, int x1, int y1) {
 		chess->oo_black = false;
 		chess->ooo_black = false;
 	}
-	if(chess->moves[x1][y1] == WHITE_OO) {
+	if(chess->moves[x][y] == WHITE_OO) {
 		chess->board[7][5] = chess->board[7][7];
 		chess->board[7][7] = ' ';
 	}
-	if(chess->moves[x1][y1] == WHITE_OOO) {
+	if(chess->moves[x][y] == WHITE_OOO) {
 		chess->board[7][3] = chess->board[7][0];
 		chess->board[7][0] = ' ';
 	}
-	if(chess->moves[x1][y1] == BLACK_OO) {
+	if(chess->moves[x][y] == BLACK_OO) {
 		chess->board[0][5] = chess->board[0][7];
 		chess->board[0][7] = ' ';
 	}
-	if(chess->moves[x1][y1] == BLACK_OOO) {
+	if(chess->moves[x][y] == BLACK_OOO) {
 		chess->board[0][3] = chess->board[0][0];
 		chess->board[0][0] = ' ';
 	}
 }
 
-bool check(Chess *chess, int x1, int y1) {
+bool check(Chess *chess, const int x, const int y) {
 	chess->ch = false;
 	chess->next_check = false;
 	int tmp_x = chess->x;
 	int tmp_y = chess->y;
 	char tmp_piece = ' ';
-	if(x1 != -1) {
-		tmp_piece = chess->board[x1][y1];
-		chess->board[x1][y1] = chess->board[chess->x][chess->y];
+	if(x != -1) {
+		tmp_piece = chess->board[x][y];
+		chess->board[x][y] = chess->board[chess->x][chess->y];
 		chess->board[chess->x][chess->y] = ' ';
 	}
 	int tmp_moves[64];
@@ -418,9 +436,9 @@ bool check(Chess *chess, int x1, int y1) {
 
 	chess->x = tmp_x;
 	chess->y = tmp_y;
-	if(x1 != -1) {
-		chess->board[chess->x][chess->y] = chess->board[x1][y1];
-		chess->board[x1][y1] = tmp_piece;
+	if(x != -1) {
+		chess->board[chess->x][chess->y] = chess->board[x][y];
+		chess->board[x][y] = tmp_piece;
 	}
 	memcpy(*chess->moves, tmp_moves, 64 * sizeof(int));
 	chess->ch = true;
@@ -429,8 +447,8 @@ bool check(Chess *chess, int x1, int y1) {
 
 void check_mate(Chess *chess) {
 	chess->mate = DRAW;
-	for(int i = 0; i < 8; i++) {
-		for(int j = 0; j < 8; j++) {
+	for(int i = 0; i < 8 && chess->mate != NONE; i++) {
+		for(int j = 0; j < 8 && chess->mate != NONE; j++) {
 			select_piece(chess, i, j);
 		}
 	}

@@ -218,7 +218,7 @@ void resign(Ui *ui, Chess* chess) {
 			}
 			if(ui->game_type == 3) {
 				chess->mate = ui->client_data->color ? BLACK_WON : WHITE_WON;
-				send_move(*(ui->client_data), ui->client_data->color ? RESIGN_WHITE : RESIGN_BLACK);
+				send_move(ui->client_data, ui->client_data->color ? RESIGN_WHITE : RESIGN_BLACK);
 			}
 			ui->game_type = 0;
 		}
@@ -403,7 +403,8 @@ void handle_online_game(Ui* ui, Chess* chess) {
 		}
 	}
 	if(chess->moved) {
-		send_move(*ui->client_data, chess->move);
+		send_move(ui->client_data, chess->move);
+		chess->moved = false;
 	}
 	if(chess->mate) {
 		ui->game_type = 0;
