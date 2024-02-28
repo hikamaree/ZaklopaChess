@@ -27,6 +27,8 @@ typedef struct {
 	bool new_game;
 	bool online_menu;
 	bool enter_ip;
+	bool enter_port;
+	bool enter_room;
 	bool start_game;
 	bool quit;
 	int game_type;

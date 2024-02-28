@@ -49,6 +49,8 @@ void set_ui(Ui *ui) {
 	ui->new_game = false;
 	ui->online_menu = false;
 	ui->enter_ip = false;
+	ui->enter_port = false;
+	ui->enter_room = false;
 	ui->start_game = false;
 	ui->game_type = 0;
 	ui->style = 4;
@@ -58,7 +60,9 @@ void set_ui(Ui *ui) {
 	GuiSetStyle(DEFAULT, TEXT_SIZE, 20);
 
 	ui->client_data = (ClientData*)malloc(sizeof(ClientData));
-	memcpy (ui->client_data->ip_address, "127.0.0.1", 10 * sizeof(char));
+	memcpy(ui->client_data->ip_address, "127.0.0.1", 10 * sizeof(char));
+	memcpy(ui->client_data->port, "8080", 5 * sizeof(char));
+	memcpy(ui->client_data->room_id, "1", 2 * sizeof(char));
 }
 
 void close_ui(Ui *ui) {
@@ -254,30 +258,27 @@ void draw_menu(Ui *ui, Chess* chess) {
 		}
 	}
 	else if(ui->online_menu) {
-		if(GuiButton((Rectangle){925, 150, 200, 50}, "HOST GAME")) {
-			ui->start_game = true;
-			ui->new_game = false;
-			ui->online_menu = false;
-			ui->rotation = false;
-			ui->client_data->host = true;
-			ui->game_type = 3;
-			start_server();
-			memcpy (ui->client_data->ip_address, "127.0.0.1", 10 * sizeof(char));
-			connect_to_server(ui->client_data);
-			ui->perspective = ui->client_data->color;
-		}
-		if (GuiTextBox((Rectangle){925, 250, 200, 50}, ui->client_data->ip_address, 32, ui->enter_ip)) {
+		DrawText("IP ADDRESS", 925, 130, 20, GetColor(GuiGetStyle(DEFAULT, LINE_COLOR)));
+		if (GuiTextBox((Rectangle){925, 150, 200, 50}, ui->client_data->ip_address, 32, ui->enter_ip)) {
 			ui->enter_ip = !ui->enter_ip;
 		}
-		if(GuiButton((Rectangle){925, 350, 200, 50}, "CONNECT")) {
-			ui->start_game = true;
-			ui->new_game = false;
-			ui->online_menu = false;
-			ui->rotation = false;
-			ui->client_data->host = false;
-			ui->game_type = 3;
-			connect_to_server(ui->client_data);
-			ui->perspective = ui->client_data->color;
+		DrawText("PORT", 925, 230, 20, GetColor(GuiGetStyle(DEFAULT, LINE_COLOR)));
+		if (GuiTextBox((Rectangle){925, 250, 200, 50}, ui->client_data->port, 32, ui->enter_port)) {
+			ui->enter_port = !ui->enter_port;
+		}
+		DrawText("CODE", 925, 330, 20, GetColor(GuiGetStyle(DEFAULT, LINE_COLOR)));
+		if (GuiTextBox((Rectangle){925, 350, 200, 50}, ui->client_data->room_id, 32, ui->enter_room)) {
+			ui->enter_room = !ui->enter_room;
+		}
+		if(GuiButton((Rectangle){925, 450, 200, 50}, "CONNECT")) {
+			if(connect_to_server(ui->client_data)) {
+				ui->start_game = true;
+				ui->new_game = false;
+				ui->online_menu = false;
+				ui->rotation = false;
+				ui->game_type = 3;
+				ui->perspective = ui->client_data->color;
+			}
 		}
 		if(GuiButton((Rectangle){925, 700, 200, 50}, "CANCEL")) {
 			ui->online_menu = false;
@@ -407,6 +408,7 @@ void handle_online_game(Ui* ui, Chess* chess) {
 		chess->moved = false;
 	}
 	if(chess->mate) {
+		disconnect(ui->client_data);
 		ui->game_type = 0;
 	}
 }

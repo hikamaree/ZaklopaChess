@@ -4,17 +4,16 @@
 #include "chess.h"
 #include <pthread.h>
 
-#define PORT 4603
-#define MAX_BUFFER_SIZE 8
+#define MAX_BUFFER_SIZE 5
 
 typedef struct {
 	Chess* chess;
+	bool color;
 	int socket;
 	pthread_t thread_id;
-	char ip_address[20];
-	bool host;
-	bool received;
-	bool color;
+	char ip_address[15];
+	char port[5];
+	char room_id[10];
 } ClientData;
 
 typedef struct {
@@ -22,9 +21,7 @@ typedef struct {
 	pthread_t thread_id;
 } ClientInfo;
 
-void start_server();
-void disable_server();
-void connect_to_server(ClientData* data);
+int connect_to_server(ClientData* data);
 void disconnect(ClientData* data);
 void send_move(ClientData* data, const char move[]);
 
