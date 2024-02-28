@@ -1,0 +1,3 @@
+[submodule "zaklopachessserver"]
+	path = zaklopachessserver
+	url = ./zaklopachessserver
