@@ -217,7 +217,7 @@ void draw_board(Ui *ui, Chess* chess, bool side) {
 
 void resign(Ui *ui, Chess* chess) {
 	if(ui->game_type != 0) {
-		if(GuiButton((Rectangle){925, 350, 200, 50}, "RESIGN")) {
+		if(GuiButton((Rectangle){925, 150, 200, 50}, "RESIGN")) {
 			if(ui->game_type == 1) {
 				chess->mate = chess->turn ? BLACK_WON: WHITE_WON;
 			}
@@ -227,6 +227,11 @@ void resign(Ui *ui, Chess* chess) {
 				disconnect(ui->client_data);
 			}
 			ui->game_type = 0;
+		}
+	}
+	else {
+		if(GuiButton((Rectangle){925, 150, 200, 50}, "NEW GAME")) {
+			ui->new_game = !ui->new_game;
 		}
 	}
 }
@@ -306,13 +311,10 @@ void draw_menu(Ui *ui, Chess* chess) {
 		}
 	}
 	else {
-		if(GuiButton((Rectangle){925, 150, 200, 50}, "NEW GAME")) {
-			ui->new_game = !ui->new_game;
-		}
+		resign(ui, chess);
 		if(GuiButton((Rectangle){925, 250, 200, 50}, "OPTIONS")) {
 			ui->options = !ui->options;
 		}
-		resign(ui, chess);
 		if(!WEB) {
 			if(GuiButton((Rectangle){925, 700, 200, 50}, "QUIT")) {
 				ui->quit = true;
