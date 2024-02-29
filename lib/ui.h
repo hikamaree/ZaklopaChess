@@ -2,7 +2,7 @@
 #define UI_H
 
 #include <raylib.h>
-
+#include "server.h"
 #include "chess.h"
 
 #define B_SQUARE (Color){ 110, 109, 107, 255 }
@@ -15,7 +15,6 @@
 #define WEB 1
 #else
 #define WEB 0
-#include "server.h"
 #endif
 
 typedef struct {
@@ -52,9 +51,7 @@ typedef struct {
 
 	Rectangle end;
 
-#if !defined(PLATFORM_WEB)
 	ClientData* client_data;
-#endif
 } Ui;
 
 void set_ui(Ui *ui);
