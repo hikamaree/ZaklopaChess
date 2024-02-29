@@ -28,6 +28,9 @@ void *receive_message(void *arg) {
 		} else if (bytes_received == 0) {
 			break;
 		}
+		if(strcmp(buffer, "play") == 0) {
+			data->playing = true;
+		}
 
 		play_move(data->chess, buffer);
 		printf("%s\n", buffer);
@@ -74,6 +77,7 @@ int connect_to_server(ClientData* data) {
 }
 
 void disconnect(ClientData* data) {
+	data->playing = false;
 	close(data->socket);
 	pthread_cancel(data->thread_id);
 }

@@ -60,6 +60,7 @@ void set_ui(Ui *ui) {
 	GuiSetStyle(DEFAULT, TEXT_SIZE, 20);
 
 	ui->client_data = (ClientData*)malloc(sizeof(ClientData));
+	ui->client_data->playing = false;
 	memcpy(ui->client_data->ip_address, "127.0.0.1", 10 * sizeof(char));
 	memcpy(ui->client_data->port, "8080", 5 * sizeof(char));
 	memcpy(ui->client_data->room_id, "1", 2 * sizeof(char));
@@ -223,6 +224,7 @@ void resign(Ui *ui, Chess* chess) {
 			if(ui->game_type == 3) {
 				chess->mate = ui->client_data->color ? BLACK_WON : WHITE_WON;
 				send_move(ui->client_data, ui->client_data->color ? RESIGN_WHITE : RESIGN_BLACK);
+				disconnect(ui->client_data);
 			}
 			ui->game_type = 0;
 		}
@@ -398,7 +400,7 @@ void handle_engine_game(Ui* ui, Chess* chess) {
 }
 
 void handle_online_game(Ui* ui, Chess* chess) {
-	if(chess->turn == ui->client_data->color) {
+	if(chess->turn == ui->client_data->color && ui->client_data->playing) {
 		if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
 			mouse_input(ui, chess, GetMousePosition());
 		}

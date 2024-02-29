@@ -14,6 +14,7 @@ typedef struct {
 	char ip_address[15];
 	char port[5];
 	char room_id[10];
+	bool playing;
 } ClientData;
 
 typedef struct {
