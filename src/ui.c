@@ -1,6 +1,5 @@
 #include "ui.h"
 #include "chess.h"
-#include "server.h"
 #include <stdlib.h>
 
 #define RAYGUI_IMPLEMENTATION
@@ -59,11 +58,13 @@ void set_ui(Ui *ui) {
 	GuiLoadStyleCyber();
 	GuiSetStyle(DEFAULT, TEXT_SIZE, 20);
 
+#if !defined(PLATFORM_WEB)
 	ui->client_data = (ClientData*)malloc(sizeof(ClientData));
 	ui->client_data->playing = false;
 	memcpy(ui->client_data->ip_address, "127.0.0.1", 10 * sizeof(char));
 	memcpy(ui->client_data->port, "8080", 5 * sizeof(char));
 	memcpy(ui->client_data->room_id, "1", 2 * sizeof(char));
+#endif
 }
 
 void close_ui(Ui *ui) {
@@ -303,8 +304,10 @@ void draw_menu(Ui *ui, Chess* chess) {
 			ui->rotation = false;
 			ui->game_type = 2;
 		}
-		if(GuiButton((Rectangle){925, 350, 200, 50}, "ONLINE")) {
-			ui->online_menu = !ui->online_menu;
+		if(WEB == 0) {
+			if(GuiButton((Rectangle){925, 350, 200, 50}, "ONLINE")) {
+				ui->online_menu = !ui->online_menu;
+			}
 		}
 		if(GuiButton((Rectangle){925, 700, 200, 50}, "CANCEL")) {
 			ui->new_game = false;
