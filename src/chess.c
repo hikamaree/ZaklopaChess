@@ -1,9 +1,8 @@
 #include "chess.h"
+#include <sched.h>
 #include <stdlib.h>
 #include <string.h>
 
-void select_piece(Chess* chess, int x, int y);
-void move_piece(Chess* chess, int x, int y);
 void make_move(Chess *chess, int x, int y);
 
 bool check_square(Chess *chess, int x, int y);
@@ -35,6 +34,26 @@ Chess* init_chess() {
 	return chess;
 }
 
+Chess* copy_chess(Chess* chess) {
+	Chess *new_chess = malloc(sizeof(Chess));
+	memcpy(new_chess, chess, sizeof(Chess));
+
+	new_chess->board = (Square**)malloc(8 * sizeof(Square*));
+	Square* p1 = (Square*)malloc(64 * sizeof(Square));
+	for(int i = 0; i < 8; i++) {
+		new_chess->board[i] = p1 + 8 * i;
+	}
+	memcpy(*new_chess->board, *chess->board, 64 * sizeof(Square));
+
+	new_chess->moves = (Move**)malloc(8 * sizeof(Move*));
+	Move *p2 = (Move*)malloc(64 * sizeof(Move));
+	for(int i = 0; i < 8; i++) {
+		new_chess->moves[i] = p2 + 8 * i;
+	}
+	memcpy(*new_chess->moves, *chess->moves, 64 * sizeof(Move));
+	return new_chess;
+}
+
 void delete_chess(Chess* chess) {
 	free(*chess->board);
 	free(chess->board);
@@ -51,12 +70,10 @@ void set_possition(Chess* chess, const char* board) {
 		if(board[i] == '/') {
 			x++;
 			y = 0;
-		}
-		else if(piece(board[i])) {
+		} else if(piece(board[i])) {
 			chess->board[x][y] = board[i];
 			y++;
-		}
-		else if (board[i] >= '0' && board[i] <= '9') {
+		} else if (board[i] >= '0' && board[i] <= '9') {
 			y += board[i] - '0';
 		}
 	}
@@ -126,12 +143,14 @@ void move_piece(Chess* chess, const int x, const int y) {
 }
 
 void play(Chess *chess, const int x, const int y) {
+	if(x < 0 || x > 7 || y < 0 || y > 7) {
+		return;
+	}
 	chess->capture = false;
 	chess->moved = false;
 	if(chess->x == -1 || chess->y == -1) {
 		select_piece(chess, x, y);
-	}
-	else {
+	} else {
 		move_piece(chess, x, y);
 	}
 }
@@ -194,8 +213,7 @@ void pawn(Chess *chess) {
 		if(black(chess->board[chess->x - 1][chess->y + 1]) && check_square(chess, chess->x - 1, chess->y + 1)) {
 			chess->moves[chess->x - 1][chess->y + 1] = POSSIBLE_MOVE;
 		}
-	}
-	else if(chess->board[chess->x][chess->y] == BLACK_PAWN) {
+	} else if(chess->board[chess->x][chess->y] == BLACK_PAWN) {
 		if(!piece(chess->board[chess->x + 1][chess->y])) {
 			if(check_square(chess, chess->x + 1, chess->y)) {
 				chess->moves[chess->x + 1][chess->y] = POSSIBLE_MOVE;
@@ -231,16 +249,14 @@ void promotion(Chess *chess, const int x, const int y) {
 void update_enpassant(Chess *chess, const int x, const int y) {
 	if(chess->moves[x][y] == ENABLE_ENPASSANT) {
 		chess->enpassant = y;
-	}
-	else {
+	} else {
 		chess->enpassant = -1;
 	}
 	if(chess->moves[x][y] == PLAY_ENPASSANT){
 		chess->capture = true;
 		if(chess->board[chess->x][chess->y] == WHITE_PAWN) {
 			chess->board[x + 1][y] = ' ';
-		}
-		else if(chess->board[chess->x][chess->y] == BLACK_PAWN) {
+		} else if(chess->board[chess->x][chess->y] == BLACK_PAWN) {
 			chess->board[x - 1][y] = ' ';
 		}
 	}
@@ -426,7 +442,7 @@ bool check(Chess *chess, const int x, const int y) {
 		chess->board[chess->x][chess->y] = ' ';
 	}
 	int tmp_moves[64];
-	memcpy(tmp_moves, *chess->moves, 64 * sizeof(int));
+	memcpy(tmp_moves, chess->moves[0], 64 * sizeof(Move));
 
 	for(int i = 0; i < 8 && !chess->next_check; i++) {
 		for(int j = 0; j < 8 && !chess->next_check; j++) {
@@ -440,7 +456,7 @@ bool check(Chess *chess, const int x, const int y) {
 		chess->board[chess->x][chess->y] = chess->board[x][y];
 		chess->board[x][y] = tmp_piece;
 	}
-	memcpy(*chess->moves, tmp_moves, 64 * sizeof(int));
+	memcpy(*chess->moves, tmp_moves, 64 * sizeof(Move));
 	chess->ch = true;
 	return chess->next_check;
 }

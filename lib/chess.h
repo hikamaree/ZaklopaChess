@@ -66,11 +66,14 @@ typedef struct {
 #define piece(square) (black(square) || white(square))
 
 Chess* init_chess();
+Chess* copy_chess(Chess*);
 void delete_chess(Chess*);
 
 void new_game(Chess*);
 void play(Chess*, const int, const int);
 void play_move(Chess*, const char*);
 void set_possition(Chess*, const char*);
+void select_piece(Chess* chess, int x, int y);
+void move_piece(Chess* chess, int x, int y);
 
 #endif

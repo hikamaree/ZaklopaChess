@@ -3,6 +3,6 @@
 
 #include "chess.h"
 
-void calculate(Square**, bool);
+void calculate(Chess*);
 
 #endif

@@ -31,7 +31,10 @@ typedef struct {
 	bool start_game;
 	bool quit;
 	int game_type;
+	bool engine_menu;
+	bool engine_game_color;
 	int style;
+
 
 	Texture2D w_king;
 	Texture2D w_queen;

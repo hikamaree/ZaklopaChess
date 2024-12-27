@@ -1,5 +1,6 @@
 #include "ui.h"
 #include "chess.h"
+#include "engine.h"
 #include <stdlib.h>
 
 #define RAYGUI_IMPLEMENTATION
@@ -51,6 +52,7 @@ void set_ui(Ui *ui) {
 	ui->enter_port = false;
 	ui->enter_room = false;
 	ui->start_game = false;
+	ui->engine_game_color = false;
 	ui->game_type = 0;
 	ui->style = 4;
 	ui->quit = false;
@@ -153,18 +155,16 @@ void draw_board(Ui *ui, Chess* chess, bool side) {
 			if(side) {
 				m = j;
 				n = i;
-			}
-			else {
+			} else {
 				m = 7 - j;
 				n = 7 - i;
 			}
-			if(n == x && m == y)
+			if(n == x && m == y) {
 				DrawRectangle(100 * m + 50, 100 * n + 50, 100, 100, S_SQUARE);
-			else {
+			} else {
 				if((i + j + 1) % 2) {
 					DrawRectangle(100 * m + 50, 100 * n + 50, 100, 100, W_SQUARE);
-				}
-				else {
+				} else {
 					DrawRectangle(100 * m + 50, 100 * n + 50, 100, 100, B_SQUARE);
 				}
 			}
@@ -218,17 +218,18 @@ void resign(Ui *ui, Chess* chess) {
 	if(ui->game_type != 0) {
 		if(GuiButton((Rectangle){925, 150, 200, 50}, "RESIGN")) {
 			if(ui->game_type == 1) {
-				chess->mate = chess->turn ? BLACK_WON: WHITE_WON;
+				chess->mate = chess->turn ? BLACK_WON : WHITE_WON;
+			}
+			if(ui->game_type == 2) {
+				chess->mate = ui->engine_game_color ? BLACK_WON : WHITE_WON;
 			}
 			if(ui->game_type == 3) {
 				chess->mate = ui->client_data->color ? BLACK_WON : WHITE_WON;
 				send_move(ui->client_data, ui->client_data->color ? RESIGN_WHITE : RESIGN_BLACK);
 				disconnect(ui->client_data);
 			}
-			ui->game_type = 0;
 		}
-	}
-	else {
+	} else {
 		if(GuiButton((Rectangle){925, 150, 200, 50}, "NEW GAME")) {
 			ui->new_game = !ui->new_game;
 		}
@@ -262,8 +263,7 @@ void draw_menu(Ui *ui, Chess* chess) {
 		if(GuiButton((Rectangle){925, 700, 200, 50}, "OK")) {
 			ui->options = !ui->options;
 		}
-	}
-	else if(ui->online_menu) {
+	} else if(ui->online_menu) {
 		DrawText("IP ADDRESS", 925, 130, 20, GetColor(GuiGetStyle(DEFAULT, LINE_COLOR)));
 		if (GuiTextBox((Rectangle){925, 150, 200, 50}, ui->client_data->ip_address, 32, ui->enter_ip)) {
 			ui->enter_ip = !ui->enter_ip;
@@ -289,18 +289,33 @@ void draw_menu(Ui *ui, Chess* chess) {
 		if(GuiButton((Rectangle){925, 700, 200, 50}, "CANCEL")) {
 			ui->online_menu = false;
 		}
-	}
-	else if(ui->new_game){
+	} else if(ui->engine_menu) {
+		if(GuiButton((Rectangle){925, 150, 200, 50}, "WHITE")) {
+			ui->engine_menu = !ui->engine_menu;
+			ui->engine_game_color = true;
+			ui->start_game = true;
+			ui->new_game = false;
+			ui->rotation = false;
+			ui->perspective = true;
+			ui->game_type = 2;
+		}
+		if(GuiButton((Rectangle){925, 250, 200, 50}, "BLACK")) {
+			ui->engine_menu = !ui->engine_menu;
+			ui->engine_game_color = false;
+			ui->start_game = true;
+			ui->new_game = false;
+			ui->rotation = false;
+			ui->perspective = false;
+			ui->game_type = 2;
+		}
+	} else if(ui->new_game) {
 		if(GuiButton((Rectangle){925, 150, 200, 50}, "SOLO")) {
 			ui->start_game = true;
 			ui->new_game = false;
 			ui->game_type = 1;
 		}
 		if(GuiButton((Rectangle){925, 250, 200, 50}, "ENGINE")) {
-			ui->start_game = true;
-			ui->new_game = false;
-			ui->rotation = false;
-			ui->game_type = 2;
+			ui->engine_menu = !ui->engine_menu;
 		}
 		if(GuiButton((Rectangle){925, 350, 200, 50}, "ONLINE")) {
 			ui->online_menu = !ui->online_menu;
@@ -308,8 +323,7 @@ void draw_menu(Ui *ui, Chess* chess) {
 		if(GuiButton((Rectangle){925, 700, 200, 50}, "CANCEL")) {
 			ui->new_game = false;
 		}
-	}
-	else {
+	} else {
 		resign(ui, chess);
 		if(GuiButton((Rectangle){925, 250, 200, 50}, "OPTIONS")) {
 			ui->options = !ui->options;
@@ -354,26 +368,23 @@ void play_sound(Ui *ui, bool capture) {
 	if(ui->sound) {
 		if(capture) {
 			PlaySound(ui->capture_sound);
-		}
-		else {
+		} else {
 			PlaySound(ui->move_sound);
 		}
 	}
 }
 
 void mouse_input(Ui *ui, Chess *chess, Vector2 coordinate) {
-	int x, y;
 	bool side = (ui->rotation && chess->turn) || (!ui->rotation && ui->perspective);
 
-	x = (coordinate.y - 50) / 100;
-	y = (coordinate.x - 50) / 100;
+	int x = (coordinate.y - 50) / 100;
+	int y = (coordinate.x - 50) / 100;
 	if(x >= 0 && x < 8 && y >= 0 && y < 8) {
 		if(!side) {
 			x = 7 - x;
 			y = 7 - y;
 		}
-	}
-	else {
+	} else {
 		x = -1;
 		y = -1;
 	}
@@ -393,10 +404,11 @@ void handle_solo_game(Ui* ui, Chess* chess) {
 }
 
 void handle_engine_game(Ui* ui, Chess* chess) {
-	// bice jednog dana
-	/*if(!chess->turn && ui->game_type == 2) { 
-	  calculate(chess);
-	  }*/
+	if(chess->turn == !ui->engine_game_color && chess->mate == NONE) {
+		calculate(chess);
+	} else {
+		handle_solo_game(ui, chess);
+	}
 	return;
 }
 
@@ -412,7 +424,6 @@ void handle_online_game(Ui* ui, Chess* chess) {
 	}
 	if(chess->mate) {
 		disconnect(ui->client_data);
-		ui->game_type = 0;
 	}
 }
 
@@ -433,6 +444,9 @@ void handle_game(Ui* ui, Chess* chess) {
 			break;
 		default:
 			break;
+	}
+	if(chess->mate) {
+		ui->game_type = 0;
 	}
 }
 
