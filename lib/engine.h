@@ -3,6 +3,6 @@
 
 #include "chess.h"
 
-void calculate(Chess*);
+void engine_start(Chess*);
 
 #endif

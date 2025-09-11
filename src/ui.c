@@ -403,13 +403,13 @@ void handle_solo_game(Ui* ui, Chess* chess) {
 	}
 }
 
+
 void handle_engine_game(Ui* ui, Chess* chess) {
-	if(chess->turn == !ui->engine_game_color && chess->mate == NONE) {
-		calculate(chess);
-	} else {
-		handle_solo_game(ui, chess);
-	}
-	return;
+    if (chess->turn == !ui->engine_game_color && chess->mate == NONE) {
+		engine_start(chess);
+    } else {
+        handle_solo_game(ui, chess);
+    }
 }
 
 void handle_online_game(Ui* ui, Chess* chess) {
@@ -450,7 +450,7 @@ void handle_game(Ui* ui, Chess* chess) {
 	}
 }
 
-void render(Chess* chess) {
+void run(Chess* chess) {
 	SetTraceLogLevel(LOG_ERROR);
 	InitWindow(1200, 900, "ZaklopaChess");
 	SetTargetFPS(60);

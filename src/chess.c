@@ -54,7 +54,7 @@ Chess* copy_chess(Chess* chess) {
 	return new_chess;
 }
 
-void delete_chess(Chess* chess) {
+void free_chess(Chess* chess) {
 	free(*chess->board);
 	free(chess->board);
 	free(*chess->moves);

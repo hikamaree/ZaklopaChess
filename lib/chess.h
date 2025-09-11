@@ -67,7 +67,7 @@ typedef struct {
 
 Chess* init_chess();
 Chess* copy_chess(Chess*);
-void delete_chess(Chess*);
+void free_chess(Chess*);
 
 void new_game(Chess*);
 void play(Chess*, const int, const int);

@@ -58,5 +58,5 @@ typedef struct {
 } Ui;
 
 void set_ui(Ui *ui);
-void render(Chess *chess);
+void run(Chess *chess);
 #endif

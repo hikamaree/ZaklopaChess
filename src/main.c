@@ -3,7 +3,7 @@
 
 int main() {
 	Chess *chess = init_chess();
-	render(chess);
-	delete_chess(chess);
+	run(chess);
+	free_chess(chess);
 	return 0;
 }
